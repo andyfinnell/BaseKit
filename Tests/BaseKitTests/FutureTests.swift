@@ -7,7 +7,7 @@ import TestKit
 final class FutureTests: XCTestCase {
     func testEraseToFutureWhenUpstreamFails() throws {
         let upstream = PassthroughSubject<Int, Error>()
-        let expectation = expectation(description: "future")
+        let expectation = self.expectation(description: "future")
         var error: Error?
         var cancellables = Set<AnyCancellable>()
         upstream.eraseToFuture(fallback: 42).sink(receiveCompletion: { completion in
@@ -31,7 +31,7 @@ final class FutureTests: XCTestCase {
     
     func testEraseToFutureWhenUpstreamSendsOneValue() throws {
         let upstream = PassthroughSubject<Int, Error>()
-        let expectation = expectation(description: "future")
+        let expectation = self.expectation(description: "future")
         var cancellables = Set<AnyCancellable>()
         var finished = false
         var result: Int?
@@ -57,7 +57,7 @@ final class FutureTests: XCTestCase {
 
     func testEraseToFutureWhenUpstreamSendsoMoreThanOneValue() throws {
         let upstream = PassthroughSubject<Int, Error>()
-        let expectation = expectation(description: "future")
+        let expectation = self.expectation(description: "future")
         var cancellables = Set<AnyCancellable>()
         var finished = false
         var result: Int?
@@ -85,7 +85,7 @@ final class FutureTests: XCTestCase {
 
     func testEraseToFutureWhenUpstreamSendsNoValue() throws {
         let upstream = PassthroughSubject<Int, Error>()
-        let expectation = expectation(description: "future")
+        let expectation = self.expectation(description: "future")
         var cancellables = Set<AnyCancellable>()
         var finished = false
         var result: Int?
