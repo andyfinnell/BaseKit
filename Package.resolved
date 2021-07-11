@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "TestKit",
+        "repositoryURL": "https://github.com/andyfinnell/TestKit.git",
+        "state": {
+          "branch": "main",
+          "revision": "160dde09507779107f49e9cd033e2c656fc18417",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
