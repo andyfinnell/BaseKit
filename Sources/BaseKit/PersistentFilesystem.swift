@@ -35,7 +35,7 @@ extension PersistentFilesystem: Filesystem {
     }
     
     public func delete(_ path: FilesystemPath) throws {
-        guard path != FilesystemPath(components: []) else {
+        guard path != FilesystemPath([]) else {
             try deleteRootFolder()
             return
         }

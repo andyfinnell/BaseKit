@@ -14,7 +14,7 @@ public final class TemporarySpace: TemporarySpaceFakable {
     
     public func store(_ data: Data) throws -> ContentId {
         let contentId = data.contentId()
-        let path = FilesystemPath(components: [contentId.value])
+        let path = FilesystemPath([contentId.value])
         
         if !filesystem.exists(path) {
             try filesystem.write(data, to: path)
@@ -24,7 +24,7 @@ public final class TemporarySpace: TemporarySpaceFakable {
     }
     
     public func fetch(_ contentId: ContentId) throws -> Data {
-        let path = FilesystemPath(components: [contentId.value])
+        let path = FilesystemPath([contentId.value])
         return try filesystem.read(path)
     }
 }

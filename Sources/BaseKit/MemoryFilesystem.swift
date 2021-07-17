@@ -45,7 +45,7 @@ extension MemoryFilesystem: Filesystem {
     public func delete(_ path: FilesystemPath) throws {
         try section.critical {
             // Special case: root
-            guard path != FilesystemPath(components: []) else {
+            guard path != FilesystemPath([]) else {
                 deleteRootFolder()
                 return
             }

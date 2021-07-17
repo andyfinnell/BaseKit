@@ -2,6 +2,18 @@ import Foundation
 
 public struct FilesystemPath: Hashable {
     let components: [String]
+    
+    public init() {
+        self.components = []
+    }
+    
+    public init(_ components: [String]) {
+        self.components = components
+    }
+    
+    public init(_ components: String...) {
+        self.components = components
+    }
 }
 
 public extension FilesystemPath {
@@ -10,11 +22,11 @@ public extension FilesystemPath {
     }
     
     func appending(name: String) -> FilesystemPath {
-        return FilesystemPath(components: components + [name])
+        return FilesystemPath(components + [name])
     }
     
     func removingLastComponent() -> FilesystemPath {
-        return FilesystemPath(components: Array(components.dropLast()))
+        return FilesystemPath(Array(components.dropLast()))
     }
     
     func lastComponent() -> String? {

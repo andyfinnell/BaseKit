@@ -8,40 +8,40 @@ final class FilesystemPathTests: XCTestCase {
     }
     
     func testAppending() {
-        let subject = FilesystemPath(components: ["one", "two"])
+        let subject = FilesystemPath(["one", "two"])
         let result = subject.appending(name: "three")
         
-        XCTAssertEqual(result, FilesystemPath(components: ["one", "two", "three"]))
-        XCTAssertEqual(subject, FilesystemPath(components: ["one", "two"]))
+        XCTAssertEqual(result, FilesystemPath(["one", "two", "three"]))
+        XCTAssertEqual(subject, FilesystemPath(["one", "two"]))
     }
     
     func testRemovingLastComponentWhenNoComponents() {
-        let subject = FilesystemPath(components: [])
+        let subject = FilesystemPath([])
         let result = subject.removingLastComponent()
         
-        XCTAssertEqual(result, FilesystemPath(components: []))
+        XCTAssertEqual(result, FilesystemPath([]))
     }
     
     func testRemovingLastComponentWhenOneOrMoreComponents() {
-        let subject = FilesystemPath(components: ["one", "two"])
+        let subject = FilesystemPath(["one", "two"])
         let result = subject.removingLastComponent()
     
-        XCTAssertEqual(result, FilesystemPath(components: ["one"]))
-        XCTAssertEqual(subject, FilesystemPath(components: ["one", "two"]))
+        XCTAssertEqual(result, FilesystemPath(["one"]))
+        XCTAssertEqual(subject, FilesystemPath(["one", "two"]))
     }
     
     func testLastComponentWhenNoComponents() {
-        let subject = FilesystemPath(components: [])
+        let subject = FilesystemPath([])
         let result = subject.lastComponent()
     
         XCTAssertNil(result)
     }
     
     func testLastComponentWhenOneOrMoreComponents() {
-        let subject = FilesystemPath(components: ["one", "two"])
+        let subject = FilesystemPath(["one", "two"])
         let result = subject.lastComponent()
     
         XCTAssertEqual(result, "two")
-        XCTAssertEqual(subject, FilesystemPath(components: ["one", "two"]))
+        XCTAssertEqual(subject, FilesystemPath(["one", "two"]))
     }
 }
