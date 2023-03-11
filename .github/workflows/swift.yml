@@ -20,4 +20,4 @@ jobs:
     - name: Run iOS tests
       run: xcodebuild test -scheme BaseKit -destination platform="iOS Simulator,name=iPhone 11 Pro"
     - name: Run tvOS tests
-      run: xcodebuild test -scheme BaseKit -destination platform="tvOS Simulator,name=Apple TV 4K"            
+      run: xcodebuild test -scheme BaseKit -destination platform="tvOS Simulator,name=Apple TV 4K (3rd generation)"            
