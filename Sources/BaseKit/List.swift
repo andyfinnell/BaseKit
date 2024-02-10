@@ -114,3 +114,31 @@ extension List: Equatable where T: Equatable {
         }
     }
 }
+
+extension List: Hashable where T: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        for element in self {
+            element.hash(into: &hasher)
+        }
+    }
+}
+
+extension List: Decodable where T: Decodable {
+    public init(from decoder: Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        var elements = [T]()
+        while !container.isAtEnd {
+            try elements.append(container.decode(T.self))
+        }
+        self.init(elements)
+    }
+}
+
+extension List: Encodable where T: Encodable {
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.unkeyedContainer()
+        for element in self {
+            try container.encode(element)
+        }
+    }
+}
