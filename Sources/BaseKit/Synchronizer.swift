@@ -1,5 +1,6 @@
 import Foundation
 
+// TODO: remove this
 public final class Synchronizer {
     public init() {
     }

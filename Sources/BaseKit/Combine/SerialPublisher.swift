@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+// TODO: remove this
 public final class SerialPublisher<Input, Output, Failure: Error>: Publisher {
     private let input: [Input]
     private let factory: (Input) -> AnyPublisher<Output, Failure>

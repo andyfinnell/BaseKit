@@ -1,5 +1,6 @@
 import Foundation
 
+// TODO: remove this
 public final class CriticalSection {
     public init() {
         pthread_mutex_init(&lock, nil)

@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+// TODO: remove this
 public extension Publisher {
     func eraseToFuture(fallback: Result<Output, Failure>) -> Future<Output, Failure> {
         Future { promise in
