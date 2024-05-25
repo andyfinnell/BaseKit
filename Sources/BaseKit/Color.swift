@@ -4,7 +4,7 @@ public enum ColorError: Error {
     case invalidHexidecimalFormat
 }
 
-public struct Color: Hashable {
+public struct Color: Hashable, Codable {
     public let red: Double
     public let green: Double
     public let blue: Double
@@ -23,6 +23,48 @@ public struct Color: Hashable {
         self.green = try Color.parse(component: greenString)
         self.blue = try Color.parse(component: blueString)
         self.alpha = try Color.parse(component: alphaString)
+    }
+}
+
+public extension Color {
+    static let white = Color(red: 1, green: 1, blue: 1, alpha: 1)
+    static let red = Color(red: 1, green: 0, blue: 0, alpha: 1)
+    static let green = Color(red: 0, green: 1, blue: 0, alpha: 1)
+    static let blue = Color(red: 0, green: 0, blue: 1, alpha: 1)
+    static let purple = Color(red: 1, green: 0, blue: 1, alpha: 1)
+    static let yellow = Color(red: 1, green: 1, blue: 0, alpha: 1)
+    static let orange = Color(red: 1, green: 0.5, blue: 0, alpha: 1)
+    static let transparentBlack = Color(red: 0, green: 0.0, blue: 0.0, alpha: 0.0)
+    
+    static let pasteboard = Color(red: 0.3, green: 0.3, blue: 0.3, alpha: 1)
+}
+
+public extension Color {
+    /// Print in RGBA
+    var hexadecimal: String {
+        "\(componentHex(red))\(componentHex(green))\(componentHex(blue))"
+    }
+}
+
+public extension Color {
+    /// Only considers non-alpha (red, green, blue)
+    func distance(to color: Color) -> Double {
+        let red = self.red - color.red
+        let green = self.green - color.green
+        let blue = self.blue - color.blue
+        return sqrt(red * red + green * green + blue * blue)
+    }
+}
+
+private extension Color {
+    func componentHex(_ value: Double) -> String {
+        let asInt = Int(value * 255.0)
+        let asString = String(asInt, radix: 16, uppercase: true)
+        if asString.count < 2 {
+            return "0\(asString)"
+        } else {
+            return asString
+        }
     }
 }
 
