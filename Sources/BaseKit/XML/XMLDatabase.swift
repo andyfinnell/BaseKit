@@ -29,6 +29,14 @@ public final class XMLDatabase {
         resolve(path.segments, from: roots, on: nil)
     }
     
+    public func element(byID id: XMLID) -> XMLElement? {
+        if case let .element(element) = self[id] {
+            return element
+        } else {
+            return nil
+        }
+    }
+    
     public func childValues(for element: XMLElement) -> [XMLValue] {
         element.children.compactMap { values[$0] }
     }

@@ -4,16 +4,25 @@ public final class Source {
     private let text: String
     private let indices: [Index]
     public let filename: String
+    public let startIndex: SourceIndex
     public let endIndex: SourceIndex
     
-    public init(text: String, filename: String) {
+    public convenience init(text: String, filename: String) {
+        self.init(text: text, startingAt: text.startIndex, filename: filename)
+    }
+
+    public init(text: String, startingAt: String.Index, filename: String) {
         self.text = text
         self.filename = filename
         
         var nextLine = 1
         var nextColumn = 1
+        var foundStartIndex: Index?
         let indices = text.indices.enumerated().map { i, index in
             let newValue = Index(index: index, line: nextLine, column: nextColumn, indexIndex: i)
+            if index == startingAt {
+                foundStartIndex = newValue
+            }
             if index < text.endIndex && text[index].isNewline {
                 nextLine = nextLine + 1
                 nextColumn = 1
@@ -24,9 +33,10 @@ public final class Source {
             return newValue
         }
         self.indices = indices
+        self.startIndex = foundStartIndex ?? Index(index: text.startIndex, line: 1, column: 1, indexIndex: 0)
         self.endIndex = Index(index: text.endIndex, line: nextLine, column: nextColumn, indexIndex: indices.count)
     }
-    
+
     public struct Index {
         let index: String.Index
         let line: Int
@@ -72,14 +82,7 @@ extension Source.Index: CustomStringConvertible {
 extension Source: CursorSource {
     public typealias SourceIndex = Source.Index
     public typealias Element = Character
-    
-    public var startIndex: SourceIndex {
-        Source.Index(index: text.startIndex,
-                     line: 1,
-                     column: 1,
-                     indexIndex: 0)
-    }
-    
+        
     public func index(after index: SourceIndex) -> SourceIndex {
         if (index.indexIndex + 1) < indices.count {
             return indices[index.indexIndex + 1]

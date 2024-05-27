@@ -11,7 +11,7 @@ public struct RealNumberRegex: CustomConsumingRegexComponent {
         startingAt index: String.Index,
         in bounds: Range<String.Index>
     ) throws -> (upperBound: String.Index, output: Double)? {
-        let source = Source(text: input, filename: "_")
+        let source = Source(text: input, startingAt: index, filename: "_")
         let cursor = Cursor(source: source, index: source.startIndex)
         let hasMinus = scanSign(cursor)
         guard var whole = scanInteger(hasMinus.remaining, radix: 10) else {
