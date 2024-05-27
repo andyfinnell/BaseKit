@@ -57,7 +57,26 @@ public extension String {
         copy.removeSubrange(suffixRange)
         return copy
     }
-    
+
+    func trimmingSuffix(_ characterSet: CharacterSet) -> (remaining: String, suffix: String?) {
+        var lastMatchingScalarIndex: String.UnicodeScalarIndex?
+        for i in unicodeScalars.indices.reversed() {
+            guard characterSet.contains(unicodeScalars[i]) else {
+                break
+            }
+            lastMatchingScalarIndex = i
+        }
+        
+        guard let lastMatchingScalarIndex else {
+            return (self, nil)
+        }
+        
+        let remaining = String(unicodeScalars[unicodeScalars.startIndex..<lastMatchingScalarIndex])
+        let suffix = String(unicodeScalars[lastMatchingScalarIndex..<unicodeScalars.endIndex])
+
+        return (remaining: remaining, suffix: suffix)
+    }
+
     func camelCase() -> String {
         var copy = ""
         var shouldUppercase = true

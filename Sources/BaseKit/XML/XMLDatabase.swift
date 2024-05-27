@@ -29,6 +29,20 @@ public final class XMLDatabase {
         resolve(path.segments, from: roots, on: nil)
     }
     
+    public func childValues(for element: XMLElement) -> [XMLValue] {
+        element.children.compactMap { values[$0] }
+    }
+    
+    public func childElements(for element: XMLElement) -> [XMLElement] {
+        childValues(for: element).compactMap { value in
+            if case let .element(element) = value {
+                return element
+            } else {
+                return nil
+            }
+        }
+    }
+    
     public func perform(_ command: XMLCommand) throws {
         var undoLog = [XMLChange]()
         var changedObjectIDs = Set<XMLDatabaseChange>()
