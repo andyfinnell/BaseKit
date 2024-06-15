@@ -1,7 +1,7 @@
 
 public struct AnyError: Error {
     public let underlyingError: Error
-    private let isEqual: (Error, Error) -> Bool
+    private let isEqual: @Sendable (Error, Error) -> Bool
     
     public init<Failure>(_ error: Failure) where Failure: Error, Failure: Equatable {
         self.underlyingError = error

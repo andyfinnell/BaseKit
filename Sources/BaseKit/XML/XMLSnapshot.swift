@@ -1,6 +1,6 @@
 import Foundation
 
-public struct XMLSnapshot {
+public struct XMLSnapshot: Sendable {
     public let roots: [XMLID]
     public let values: [XMLID: XMLValue]
     

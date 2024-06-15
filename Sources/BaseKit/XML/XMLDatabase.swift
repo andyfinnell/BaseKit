@@ -3,14 +3,12 @@ import Foundation
 public final class XMLDatabase {
     private var roots = [XMLID]()
     private var values = [XMLID: XMLValue]()
-    private let undoManager: UndoManager?
     
     public weak var delegate: XMLDatabaseDelegate?
     
-    init(roots: [XMLID], values: [XMLID: XMLValue], undoManager: UndoManager?) {
+    init(roots: [XMLID], values: [XMLID: XMLValue]) {
         self.roots = roots
         self.values = values
-        self.undoManager = undoManager
     }
     
     public var snapshot: XMLSnapshot {
@@ -51,7 +49,7 @@ public final class XMLDatabase {
         }
     }
     
-    public func perform(_ command: XMLCommand) throws {
+    public func perform(_ command: XMLCommand) async throws -> XMLCommand {
         var undoLog = [XMLChange]()
         var changedObjectIDs = Set<XMLDatabaseChange>()
         do {
@@ -60,9 +58,9 @@ public final class XMLDatabase {
                 undoLog.append(contentsOf: undoChanges)
             }
             
-            registerUndo(undoLog, withName: command.name)
-            
-            delegate?.onChanges(changedObjectIDs)
+            let undoCommand = XMLCommand(name: command.name, changes: undoLog)
+            await delegate?.onChanges(changedObjectIDs)
+            return undoCommand
         } catch {
             rollback(undoLog)
             throw XMLError.commandFailed(command.name, error)
@@ -134,25 +132,7 @@ private extension XMLDatabase {
             }
         }
     }
-    
-    func registerUndo(_ undoChanges: [XMLChange], withName name: String) {
-        guard let undoManager else {
-            return
-        }
         
-        undoManager.beginUndoGrouping()
-        undoManager.setActionName(name)
-        undoManager.registerUndo(withTarget: self) { me in
-            do {
-                let undoCommand = XMLCommand(name: name, changes: undoChanges)
-                try me.perform(undoCommand)
-            } catch {
-                print("Undo failed because of \(error)")
-            }
-        }
-        undoManager.endUndoGrouping()
-    }
-
     func rollback(_ undoChanges: [XMLChange])  {
         // Best effort rollback
         var changedIDs = Set<XMLDatabaseChange>()

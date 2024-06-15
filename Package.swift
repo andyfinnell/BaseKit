@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:5.10
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -7,8 +7,8 @@ let package = Package(
     name: "BaseKit",
     platforms: [
         .macOS(.v13),
-        .iOS(.v13),
-        .tvOS(.v13)
+        .iOS(.v16),
+        .tvOS(.v16)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -26,7 +26,10 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "BaseKit",
-            dependencies: []),
+            dependencies: [], 
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]),
         .testTarget(
             name: "BaseKitTests",
             dependencies: ["BaseKit", "TestKit"]),

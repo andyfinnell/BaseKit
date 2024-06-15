@@ -1,23 +1,23 @@
 import Foundation
 
-public enum XMLIndex: Hashable {
+public enum XMLIndex: Hashable, Sendable {
     case last
     case at(Int)
 }
 
-public struct XMLCreateChange {
+public struct XMLCreateChange: Sendable {
     public let parentID: XMLID? // nil means root
     public let index: XMLIndex
-    public let factory: () -> XMLSnapshot
+    public let factory: @Sendable () -> XMLSnapshot
     
-    public init(parentID: XMLID?, index: XMLIndex, factory: @escaping () -> XMLSnapshot) {
+    public init(parentID: XMLID?, index: XMLIndex, factory: @escaping @Sendable () -> XMLSnapshot) {
         self.parentID = parentID
         self.index = index
         self.factory = factory
     }
 }
 
-public struct XMLDestroyChange {
+public struct XMLDestroyChange: Sendable {
     public let id: XMLID
     
     public init(id: XMLID) {
@@ -25,7 +25,7 @@ public struct XMLDestroyChange {
     }
 }
 
-public struct XMLUpdateContentChange {
+public struct XMLUpdateContentChange: Sendable {
     public let valueID: XMLID // can't be an element; only text, comment, whitespace, cdata
     public let content: String
     
@@ -35,7 +35,7 @@ public struct XMLUpdateContentChange {
     }
 }
 
-public struct XMLAttributeUpsertChange {
+public struct XMLAttributeUpsertChange: Sendable {
     public let elementID: XMLID
     public let attributeName: String
     public let attributeValue: String
@@ -47,18 +47,17 @@ public struct XMLAttributeUpsertChange {
     }
 }
 
-public struct XMLAttributeDestroyChange {
+public struct XMLAttributeDestroyChange: Sendable {
     public let elementID: XMLID
     public let attributeName: String
 
-    
     public init(elementID: XMLID, attributeName: String) {
         self.elementID = elementID
         self.attributeName = attributeName
     }
 }
 
-public struct XMLReorderChange {
+public struct XMLReorderChange: Sendable {
     public let parentID: XMLID? // nil means root
     public let fromIndex: XMLIndex
     public let toIndex: XMLIndex
@@ -70,7 +69,7 @@ public struct XMLReorderChange {
     }
 }
 
-public enum XMLChange {
+public enum XMLChange: Sendable {
     case create(XMLCreateChange)
     case destroy(XMLDestroyChange)
     case update(XMLUpdateContentChange)
@@ -79,7 +78,7 @@ public enum XMLChange {
     case reorder(XMLReorderChange)
 }
 
-public struct XMLCommand {
+public struct XMLCommand: Sendable {
     public let name: String
     public let changes: [XMLChange]
     

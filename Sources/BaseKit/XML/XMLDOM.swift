@@ -3,7 +3,7 @@ import Foundation
 public enum XMLIDType {}
 public typealias XMLID = Identifier<UUID, XMLIDType>
 
-public struct XMLElement: Hashable, Identifiable {
+public struct XMLElement: Hashable, Identifiable, Sendable {
     public let id: XMLID
     public let parentID: XMLID?
     public let name: String
@@ -110,7 +110,7 @@ public struct XMLElement: Hashable, Identifiable {
     }
 }
 
-public struct XMLText: Hashable, Identifiable {
+public struct XMLText: Hashable, Identifiable, Sendable {
     public let id: XMLID
     public let parentID: XMLID?
     public let characters: String
@@ -126,7 +126,7 @@ public struct XMLText: Hashable, Identifiable {
     }
 }
 
-public struct XMLCData: Hashable, Identifiable {
+public struct XMLCData: Hashable, Identifiable, Sendable {
     public let id: XMLID
     public let parentID: XMLID?
     public let data: String
@@ -142,7 +142,7 @@ public struct XMLCData: Hashable, Identifiable {
     }
 }
 
-public struct XMLComment: Hashable, Identifiable {
+public struct XMLComment: Hashable, Identifiable, Sendable {
     public let id: XMLID
     public let parentID: XMLID?
     public let text: String
@@ -158,7 +158,7 @@ public struct XMLComment: Hashable, Identifiable {
     }
 }
 
-public struct XMLIgnorableWhitespace: Hashable, Identifiable {
+public struct XMLIgnorableWhitespace: Hashable, Identifiable, Sendable {
     public let id: XMLID
     public let parentID: XMLID?
     public let text: String
@@ -174,7 +174,7 @@ public struct XMLIgnorableWhitespace: Hashable, Identifiable {
     }
 }
 
-public enum XMLValue: Hashable, Identifiable {
+public enum XMLValue: Hashable, Identifiable, Sendable {
     case element(XMLElement)
     case text(XMLText)
     case cdata(XMLCData)

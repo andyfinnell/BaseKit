@@ -1,6 +1,6 @@
 import Foundation
 
-public struct LogTag: RawRepresentable, Hashable {
+public struct LogTag: RawRepresentable, Hashable, Sendable {
     public let rawValue: String
     
     public static let http = LogTag("http")

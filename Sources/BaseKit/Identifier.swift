@@ -8,6 +8,7 @@ public struct Identifier<Value, Phantom> {
     }
 }
  
+extension Identifier: Sendable where Value: Sendable {}
 extension Identifier: Equatable where Value: Equatable {}
 extension Identifier: Hashable where Value: Hashable {}
 extension Identifier: Decodable where Value: Decodable {

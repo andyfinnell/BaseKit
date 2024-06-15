@@ -1,6 +1,6 @@
 /// Signal is used in conjunction with Condition. Together they allow
 /// one Task to wait on anther Task.
-public final class Signal {
+public struct Signal: Sendable {
     private let stream: AsyncStream<Void>.Continuation
     
     /// Private init, don't call directly. Instead, use Conditiona.makeCondition()
@@ -18,11 +18,11 @@ public final class Signal {
 /// create a Condition/Signal pair. The Task that wants to wait on something to
 /// happen takes the Condition, the Task that notifies of the condition takes
 /// the Signal.
-public struct Condition {
-    private let waiter: () async -> Void
+public struct Condition: Sendable {
+    private let waiter: @Sendable () async -> Void
     
     /// Private init; create a closure that will can be waited on
-    fileprivate init(waiter: @escaping () async -> Void) {
+    fileprivate init(waiter: @escaping @Sendable () async -> Void) {
         self.waiter = waiter
     }
     

@@ -4,7 +4,7 @@ public enum ColorError: Error {
     case invalidHexidecimalFormat
 }
 
-public struct Color: Hashable, Codable {
+public struct Color: Hashable, Codable, Sendable {
     public let red: Double
     public let green: Double
     public let blue: Double

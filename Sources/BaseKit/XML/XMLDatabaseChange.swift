@@ -5,5 +5,5 @@ public enum XMLDatabaseChange: Hashable {
 }
 
 public protocol XMLDatabaseDelegate: AnyObject {
-    func onChanges(_ changes: Set<XMLDatabaseChange>)
+    func onChanges(_ changes: Set<XMLDatabaseChange>) async
 }
