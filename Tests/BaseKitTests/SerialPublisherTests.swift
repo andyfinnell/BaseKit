@@ -4,6 +4,7 @@ import XCTest
 import BaseKit
 
 final class SerialPublisherTests: XCTestCase {
+    @MainActor
     func testSerialPublisher() {
         let finishExpectation = expectation(description: "finish")
         var cancellables = Set<AnyCancellable>()

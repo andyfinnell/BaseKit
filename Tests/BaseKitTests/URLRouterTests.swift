@@ -10,6 +10,7 @@ final class URLRouterTests: XCTestCase {
         subject = URLRouter()
     }
     
+    @MainActor 
     func test_onAnonymous_match() {
         let matchExpectation = expectation(description: "match")
         var finalMatch: URLMatch?
@@ -39,6 +40,7 @@ final class URLRouterTests: XCTestCase {
         XCTAssertNil(finalMatch)
     }
 
+    @MainActor 
     func test_onNamed_match() {
         let handler = FakeURLHandler()
         handler.handle_expectation = expectation(description: "match")

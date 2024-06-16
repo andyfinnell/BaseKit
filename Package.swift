@@ -32,6 +32,9 @@ let package = Package(
             ]),
         .testTarget(
             name: "BaseKitTests",
-            dependencies: ["BaseKit", "TestKit"]),
+            dependencies: ["BaseKit", "TestKit"],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]),
     ]
 )

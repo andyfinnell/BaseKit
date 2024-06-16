@@ -6,22 +6,16 @@ enum TestError: Error {
 }
 
 final class ConcurrencyLimiterTests: XCTestCase {
-    private var subject: ConcurrencyLimiter!
-    
-    override func setUp() {
-        super.setUp()
-        
-        subject = ConcurrencyLimiter(concurrency: 3)
-    }
     
     func testLimitsToConcurrencySetting() async throws {
         let counter = Counter()
-        
+        let subject = ConcurrencyLimiter(concurrency: 3)
+
         let sum = try await withThrowingTaskGroup(of: Int.self) { taskGroup in
             // Spin up 100 concurrent tasks
             for i in 0..<100 {
                 taskGroup.addTask {
-                    await self.subject.run {
+                    await subject.run {
                         await counter.increment()
                         
                         // do busy work so we don't immediately complete
@@ -48,13 +42,14 @@ final class ConcurrencyLimiterTests: XCTestCase {
     
     func testThrowingWorks() async throws {
         let counter = Counter()
-        
+        let subject = ConcurrencyLimiter(concurrency: 3)
+
         let sum = try await withThrowingTaskGroup(of: Int.self) { taskGroup in
             // Spin up 100 concurrent tasks
             for i in 0..<100 {
                 taskGroup.addTask {
                     do {
-                        try await self.subject.run {
+                        try await subject.run {
                             await counter.increment()
                             
                             // do busy work so we don't immediately complete

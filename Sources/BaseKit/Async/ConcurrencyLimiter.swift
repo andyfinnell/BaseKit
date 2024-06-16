@@ -1,7 +1,7 @@
 /// This class allows you to bottleneck how many blocks can run concurrently.
 /// It's useful when you don't want to overwhelm a system or resource, such
 /// as the network or CPU.
-public final class ConcurrencyLimiter {
+public final class ConcurrencyLimiter: Sendable {
     private let counter: Counter
     
     /// Concurrency is the maximum number of blocks that can be run

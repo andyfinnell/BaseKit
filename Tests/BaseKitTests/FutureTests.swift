@@ -5,6 +5,7 @@ import BaseKit
 import TestKit
 
 final class FutureTests: XCTestCase {
+    @MainActor
     func testEraseToFutureWhenUpstreamFails() throws {
         let upstream = PassthroughSubject<Int, Error>()
         let expectation = self.expectation(description: "future")
@@ -29,6 +30,7 @@ final class FutureTests: XCTestCase {
         XCTAssertNotNil(error)
     }
     
+    @MainActor
     func testEraseToFutureWhenUpstreamSendsOneValue() throws {
         let upstream = PassthroughSubject<Int, Error>()
         let expectation = self.expectation(description: "future")
@@ -55,6 +57,7 @@ final class FutureTests: XCTestCase {
         XCTAssertTrue(finished)
     }
 
+    @MainActor
     func testEraseToFutureWhenUpstreamSendsoMoreThanOneValue() throws {
         let upstream = PassthroughSubject<Int, Error>()
         let expectation = self.expectation(description: "future")
@@ -83,6 +86,7 @@ final class FutureTests: XCTestCase {
         XCTAssertTrue(finished)
     }
 
+    @MainActor
     func testEraseToFutureWhenUpstreamSendsNoValue() throws {
         let upstream = PassthroughSubject<Int, Error>()
         let expectation = self.expectation(description: "future")
