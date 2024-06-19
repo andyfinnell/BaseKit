@@ -4,7 +4,6 @@ import BaseKit
 import TestKit
 
 final class XMLDatabaseTests: XCTestCase {
-    private var delegate: FakeXMLDatabaseDelegate!
     private var subject: XMLDatabase!
     
     override func setUp() async throws {
@@ -23,9 +22,7 @@ final class XMLDatabaseTests: XCTestCase {
             
             </svg>
             """
-        delegate = FakeXMLDatabaseDelegate()
         subject = try XMLDatabase(text: svgString)
-        subject.delegate = delegate
     }
     
     func testReadWriteRoundTrip() throws {
@@ -46,7 +43,7 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
     
-    func testCommitAddObject() async throws {
+    func testCommitAddObject() throws {
         let rootID = subject.rootValues.first?.id
         let whitespace1ID = XMLID()
         let elementID = XMLID()
@@ -79,7 +76,7 @@ final class XMLDatabaseTests: XCTestCase {
                 ),
             ]
         )
-        _ = try await subject.perform(addRect)
+        let (_, changes) = try subject.perform(addRect)
         
         let output = try subject.text()
         
@@ -105,10 +102,10 @@ final class XMLDatabaseTests: XCTestCase {
             XMLDatabaseChange.value(elementID),
             XMLDatabaseChange.value(whitespace2ID),
         ])
-        XCTAssertMethodWasCalledWithArgEquals(delegate.onChangesFake, expectedIDs)
+        XCTAssertEqual(changes, expectedIDs)
     }
     
-    func testCommitDestroyObject() async throws {
+    func testCommitDestroyObject() throws {
         let rootID = subject.rootValues.first?.id
         let text = subject[XMLPath.element("svg").element("text")]
         let textText = subject[XMLPath.element("svg").element("text").text()]
@@ -119,7 +116,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .destroy(XMLDestroyChange(id: text!.id))
             ]
         )
-        _ = try await subject.perform(deleteText)
+        let (_, changes) = try subject.perform(deleteText)
         
         let output = try subject.text()
         
@@ -142,10 +139,10 @@ final class XMLDatabaseTests: XCTestCase {
             XMLDatabaseChange.value(text!.id),
             XMLDatabaseChange.value(textText!.id),
         ])
-        XCTAssertMethodWasCalledWithArgEquals(delegate.onChangesFake, expectedIDs)
+        XCTAssertEqual(changes, expectedIDs)
     }
 
-    func testCommitUpdateContentText() async throws {
+    func testCommitUpdateContentText() throws {
         let textText = subject[XMLPath.element("svg").element("text").text()]
         let updateText = XMLCommand(
             name: "Update text",
@@ -153,7 +150,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .update(XMLUpdateContentChange(valueID: textText!.id, content: "Hello world!"))
             ]
         )
-        _ = try await subject.perform(updateText)
+        let (_, changes) = try subject.perform(updateText)
         
         let output = try subject.text()
         
@@ -174,10 +171,10 @@ final class XMLDatabaseTests: XCTestCase {
         let expectedIDs = Set([
             XMLDatabaseChange.value(textText!.id),
         ])
-        XCTAssertMethodWasCalledWithArgEquals(delegate.onChangesFake, expectedIDs)
+        XCTAssertEqual(changes, expectedIDs)
     }
 
-    func testCommitAttributeInsert() async throws {
+    func testCommitAttributeInsert() throws {
         let circle = subject[XMLPath.element("svg").element("circle")]
         let updateCircle = XMLCommand(
             name: "Update position",
@@ -186,7 +183,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .upsertAttribute(XMLAttributeUpsertChange(elementID: circle!.id, attributeName: "y", attributeValue: "15")),
             ]
         )
-        _ = try await subject.perform(updateCircle)
+        let (_, changes) = try subject.perform(updateCircle)
         
         let output = try subject.text()
         
@@ -207,10 +204,10 @@ final class XMLDatabaseTests: XCTestCase {
         let expectedIDs = Set([
             XMLDatabaseChange.value(circle!.id),
         ])
-        XCTAssertMethodWasCalledWithArgEquals(delegate.onChangesFake, expectedIDs)
+        XCTAssertEqual(changes, expectedIDs)
     }
 
-    func testCommitAttributeUpdate() async throws {
+    func testCommitAttributeUpdate() throws {
         let text = subject[XMLPath.element("svg").element("text")]
         let updateText = XMLCommand(
             name: "Update font size",
@@ -218,7 +215,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .upsertAttribute(XMLAttributeUpsertChange(elementID: text!.id, attributeName: "font-size", attributeValue: "72"))
             ]
         )
-        _ = try await subject.perform(updateText)
+        let (_, changes) = try subject.perform(updateText)
         
         let output = try subject.text()
         
@@ -239,10 +236,10 @@ final class XMLDatabaseTests: XCTestCase {
         let expectedIDs = Set([
             XMLDatabaseChange.value(text!.id),
         ])
-        XCTAssertMethodWasCalledWithArgEquals(delegate.onChangesFake, expectedIDs)
+        XCTAssertEqual(changes, expectedIDs)
     }
 
-    func testCommitAttributeRemove() async throws {
+    func testCommitAttributeRemove() throws {
         let text = subject[XMLPath.element("svg").element("text")]
         let updateText = XMLCommand(
             name: "Remove text anchor",
@@ -250,7 +247,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .destroyAttribute(XMLAttributeDestroyChange(elementID: text!.id, attributeName: "text-anchor"))
             ]
         )
-        _ = try await subject.perform(updateText)
+        let (_, changes) = try subject.perform(updateText)
         
         let output = try subject.text()
         
@@ -271,10 +268,10 @@ final class XMLDatabaseTests: XCTestCase {
         let expectedIDs = Set([
             XMLDatabaseChange.value(text!.id),
         ])
-        XCTAssertMethodWasCalledWithArgEquals(delegate.onChangesFake, expectedIDs)
+        XCTAssertEqual(changes, expectedIDs)
     }
 
-    func testCommitReorder() async throws {
+    func testCommitReorder() throws {
         let svg = subject[XMLPath.element("svg")]
         let updateText = XMLCommand(
             name: "Reorder elements",
@@ -283,7 +280,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .reorder(XMLReorderChange(parentID: svg?.id, fromIndex: .at(5), toIndex: .at(4))),
             ]
         )
-        _ = try await subject.perform(updateText)
+        let (_, changes) = try subject.perform(updateText)
         
         let output = try subject.text()
         
@@ -304,10 +301,10 @@ final class XMLDatabaseTests: XCTestCase {
         let expectedIDs = Set([
             XMLDatabaseChange.value(svg!.id),
         ])
-        XCTAssertMethodWasCalledWithArgEquals(delegate.onChangesFake, expectedIDs)
+        XCTAssertEqual(changes, expectedIDs)
     }
 
-    func testUndo() async throws {
+    func testUndo() throws {
         let text = subject[XMLPath.element("svg").element("text")]
 
         let deleteText = XMLCommand(
@@ -316,9 +313,9 @@ final class XMLDatabaseTests: XCTestCase {
                 .destroy(XMLDestroyChange(id: text!.id))
             ]
         )
-        let undoCommand = try await subject.perform(deleteText)
+        let (undoCommand, _) = try subject.perform(deleteText)
         
-        _ = try await subject.perform(undoCommand)
+        _ = try subject.perform(undoCommand)
         
         let output = try subject.text()
         

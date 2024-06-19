@@ -1,9 +1,5 @@
 
-public enum XMLDatabaseChange: Hashable {
+public enum XMLDatabaseChange: Hashable, Sendable {
     case root
     case value(XMLID)
-}
-
-public protocol XMLDatabaseDelegate: AnyObject {
-    func onChanges(_ changes: Set<XMLDatabaseChange>) async
 }

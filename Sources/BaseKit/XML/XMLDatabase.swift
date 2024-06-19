@@ -3,9 +3,7 @@ import Foundation
 public final class XMLDatabase {
     private var roots = [XMLID]()
     private var values = [XMLID: XMLValue]()
-    
-    public weak var delegate: XMLDatabaseDelegate?
-    
+        
     init(roots: [XMLID], values: [XMLID: XMLValue]) {
         self.roots = roots
         self.values = values
@@ -49,18 +47,19 @@ public final class XMLDatabase {
         }
     }
     
-    public func perform(_ command: XMLCommand) async throws -> XMLCommand {
+    public func perform(
+        _ command: XMLCommand
+    ) throws -> (undo: XMLCommand, changes: Set<XMLDatabaseChange>) {
         var undoLog = [XMLChange]()
-        var changedObjectIDs = Set<XMLDatabaseChange>()
         do {
+            var changedObjectIDs = Set<XMLDatabaseChange>()
             for change in command.changes {
                 let undoChanges = try perform(change, impacting: &changedObjectIDs)
                 undoLog.append(contentsOf: undoChanges)
             }
             
             let undoCommand = XMLCommand(name: command.name, changes: undoLog)
-            await delegate?.onChanges(changedObjectIDs)
-            return undoCommand
+            return (undo: undoCommand, changes: changedObjectIDs)
         } catch {
             rollback(undoLog)
             throw XMLError.commandFailed(command.name, error)
