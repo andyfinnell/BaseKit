@@ -61,6 +61,7 @@ public final class XMLDatabase {
             let undoCommand = XMLCommand(name: command.name, changes: undoLog)
             return (undo: undoCommand, changes: changedObjectIDs)
         } catch {
+            print("XMLDatabase.perform FAILURE")
             rollback(undoLog)
             throw XMLError.commandFailed(command.name, error)
         }
@@ -329,7 +330,7 @@ private extension XMLDatabase {
     ) throws -> [XMLChange] {
         guard let existing = values[change.elementID],
               let oldValue = try existing.attribute(for: change.attributeName) else {
-            throw XMLError.valueNotFound(change.elementID)
+            return [] // no reason to fail. Treat like the opposite of an upsert
         }
         
         
