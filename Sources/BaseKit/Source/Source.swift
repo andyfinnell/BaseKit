@@ -8,20 +8,24 @@ public final class Source {
     public let endIndex: SourceIndex
     
     public convenience init(text: String, filename: String) {
-        self.init(text: text, startingAt: text.startIndex, filename: filename)
+        self.init(text: text, startingAt: text.startIndex, endingBefore: text.endIndex, filename: filename)
     }
 
-    public init(text: String, startingAt: String.Index, filename: String) {
+    public init(text: String, startingAt: String.Index, endingBefore: String.Index, filename: String) {
         self.text = text
         self.filename = filename
         
         var nextLine = 1
         var nextColumn = 1
         var foundStartIndex: Index?
+        var foundEndIndex: Index?
         let indices = text.indices.enumerated().map { i, index in
             let newValue = Index(index: index, line: nextLine, column: nextColumn, indexIndex: i)
             if index == startingAt {
                 foundStartIndex = newValue
+            }
+            if index == endingBefore {
+                foundEndIndex = newValue
             }
             if index < text.endIndex && text[index].isNewline {
                 nextLine = nextLine + 1
@@ -34,7 +38,7 @@ public final class Source {
         }
         self.indices = indices
         self.startIndex = foundStartIndex ?? Index(index: text.startIndex, line: 1, column: 1, indexIndex: 0)
-        self.endIndex = Index(index: text.endIndex, line: nextLine, column: nextColumn, indexIndex: indices.count)
+        self.endIndex = foundEndIndex ?? Index(index: text.endIndex, line: nextLine, column: nextColumn, indexIndex: indices.count)
     }
 
     public struct Index {

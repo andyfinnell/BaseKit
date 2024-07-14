@@ -27,6 +27,7 @@ public struct Color: Hashable, Codable, Sendable {
 }
 
 public extension Color {
+    static let black = Color(red: 0, green: 0, blue: 0, alpha: 1)
     static let white = Color(red: 1, green: 1, blue: 1, alpha: 1)
     static let red = Color(red: 1, green: 0, blue: 0, alpha: 1)
     static let green = Color(red: 0, green: 1, blue: 0, alpha: 1)

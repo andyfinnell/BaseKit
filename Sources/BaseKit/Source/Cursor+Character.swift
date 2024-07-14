@@ -46,7 +46,15 @@ public extension Cursor where S.Element == Character {
         }
         return set.contains(ch)
     }
-    
+
+    func `in`(_ set: CharacterSet) -> Bool {
+        guard let ch = element, let scalar = ch.unicodeScalars.first, ch.unicodeScalars.count == 1 else {
+            return false
+        }
+        
+        return set.contains(scalar)
+    }
+
     func scan(into output: inout String) -> Cursor {
         guard let ch = element else {
             return self

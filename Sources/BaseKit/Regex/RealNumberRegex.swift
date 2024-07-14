@@ -1,19 +1,17 @@
 import RegexBuilder
 import Foundation
 
-public struct RealNumberRegex: CustomConsumingRegexComponent {
-    public typealias RegexOutput = Double
-    
+public struct RealNumberRegex {
     public init() {}
+}
+
+extension RealNumberRegex: Scannable {
+    public typealias ScannerOutput = Double
     
-    public func consuming(
-        _ input: String,
-        startingAt index: String.Index,
-        in bounds: Range<String.Index>
-    ) throws -> (upperBound: String.Index, output: Double)? {
-        let source = Source(text: input, startingAt: index, filename: "_")
-        let cursor = Cursor(source: source, index: source.startIndex)
-        let hasMinus = scanSign(cursor)
+    public func scan(
+        startingAt input: Cursor<Source>
+    ) throws -> ScannerResult<Double>? {
+        let hasMinus = scanSign(input)
         guard var whole = scanInteger(hasMinus.remaining, radix: 10) else {
             return nil // no match
         }
@@ -57,7 +55,23 @@ public struct RealNumberRegex: CustomConsumingRegexComponent {
         } else {
             value = Double(whole.value.value)
         }
-        return (upperBound: stop.index.index, output: value)
+        return ScannerResult(remaining: stop, value: value)
+    }
+}
+extension RealNumberRegex: CustomConsumingRegexComponent {
+    public typealias RegexOutput = Double
+        
+    public func consuming(
+        _ input: String,
+        startingAt index: String.Index,
+        in bounds: Range<String.Index>
+    ) throws -> (upperBound: String.Index, output: Double)? {
+        let source = Source(text: input, startingAt: index, endingBefore: bounds.upperBound, filename: "_")
+        let cursor = Cursor(source: source, index: source.startIndex)
+        guard let result = try scan(startingAt: cursor) else {
+            return nil
+        }
+        return (upperBound: result.remaining.index.index, output: result.value)
     }
 }
 

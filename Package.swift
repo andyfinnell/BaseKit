@@ -6,9 +6,9 @@ import PackageDescription
 let package = Package(
     name: "BaseKit",
     platforms: [
-        .macOS(.v13),
-        .iOS(.v16),
-        .tvOS(.v16)
+        .macOS(.v14),
+        .iOS(.v17),
+        .tvOS(.v17)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
