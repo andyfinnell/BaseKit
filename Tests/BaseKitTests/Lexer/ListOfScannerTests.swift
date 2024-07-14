@@ -4,9 +4,9 @@ import XCTest
 final class ListOfScannerTests: XCTestCase {
     func testMatch() throws {
         let subject = ListOfScanner(separator: {
-            RepeatScanner { CharacterSet.whitespaces }
+            RepeatScanner(as: String.self) { CharacterSet.whitespaces }
             ","
-            RepeatScanner { CharacterSet.whitespaces }
+            RepeatScanner(as: String.self) { CharacterSet.whitespaces }
         }, element: {
             IntegerRegex()
         })
@@ -16,9 +16,9 @@ final class ListOfScannerTests: XCTestCase {
     
     func testNoMatch() throws {
         let subject = ListOfScanner(separator: {
-            RepeatScanner { CharacterSet.whitespaces }
+            RepeatScanner(as: String.self) { CharacterSet.whitespaces }
             ","
-            RepeatScanner { CharacterSet.whitespaces }
+            RepeatScanner(as: String.self) { CharacterSet.whitespaces }
         }, element: {
             IntegerRegex()
         })

@@ -3,7 +3,7 @@ import XCTest
 
 final class RepeatScannerTests: XCTestCase {
     func testMatchesAll() throws {
-        let subject = RepeatScanner {
+        let subject = RepeatScanner(as: Array<String>.self) {
             CharacterSet.decimalDigits
         }
         let result = try "12345".wholeMatch(ofScanner: subject)
@@ -11,7 +11,7 @@ final class RepeatScannerTests: XCTestCase {
     }
     
     func testMatchesUpToMaximum() throws {
-        let subject = RepeatScanner(maximum: .count(3)) {
+        let subject = RepeatScanner(maximum: .count(3), as: Array<String>.self) {
             CharacterSet.decimalDigits
         }
         let result = try "12345".prefixMatch(ofScanner: subject)
@@ -19,7 +19,7 @@ final class RepeatScannerTests: XCTestCase {
     }
     
     func testNoMatchMinimum() throws {
-        let subject = RepeatScanner(minimum: 6) {
+        let subject = RepeatScanner(minimum: 6, as: Array<String>.self) {
             CharacterSet.decimalDigits
         }
         let result = try "12345".wholeMatch(ofScanner: subject)
@@ -27,7 +27,7 @@ final class RepeatScannerTests: XCTestCase {
     }
     
     func testMatchesMinimum() throws {
-        let subject = RepeatScanner(minimum: 3) {
+        let subject = RepeatScanner(minimum: 3, as: Array<String>.self) {
             CharacterSet.decimalDigits
         }
         let result = try "12345".wholeMatch(ofScanner: subject)
@@ -35,7 +35,7 @@ final class RepeatScannerTests: XCTestCase {
     }
     
     func testMatchesZero() throws {
-        let subject = RepeatScanner {
+        let subject = RepeatScanner(as: Array<String>.self) {
             CharacterSet.decimalDigits
         }
         let result = try "".wholeMatch(ofScanner: subject)
