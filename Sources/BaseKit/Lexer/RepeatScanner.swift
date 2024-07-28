@@ -3,7 +3,7 @@ public enum Repeat: Hashable, Sendable {
     case forever
 }
 
-public struct RepeatScanner<ScannerOutput, ElementScanner: Scannable>: Scannable {
+public struct RepeatScanner<ScannerOutput: Sendable, ElementScanner: Scannable>: Scannable {
     private let element: @Sendable () -> ElementScanner
     private let initialValue: @Sendable () -> ScannerOutput
     private let reduce: @Sendable (inout ScannerOutput, ElementScanner.ScannerOutput) -> Void

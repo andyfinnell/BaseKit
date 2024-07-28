@@ -1,6 +1,6 @@
 
 public protocol Scannable<ScannerOutput>: Sendable {
-    associatedtype ScannerOutput
+    associatedtype ScannerOutput: Sendable
     
     func scan(
         startingAt input: Cursor<Source>

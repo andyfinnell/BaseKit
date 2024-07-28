@@ -1,6 +1,6 @@
 import Foundation
 
-public struct RawRepresentableScanner<ScannerOutput: RawRepresentable>: Scannable
+public struct RawRepresentableScanner<ScannerOutput: RawRepresentable & Sendable>: Scannable
     where ScannerOutput.RawValue == String, ScannerOutput: CaseIterable {
     
     public init() {}

@@ -16,3 +16,11 @@ public struct OptionalScanner<Content: Scannable>: Scannable {
         }
     }
 }
+
+public extension OptionalScanner {
+    func nilCoalescing(with defaultValue: Content.ScannerOutput) -> some Scannable<Content.ScannerOutput> {
+        NilCoalescingScanner(defaultValue: defaultValue) {
+            self
+        }
+    }
+}

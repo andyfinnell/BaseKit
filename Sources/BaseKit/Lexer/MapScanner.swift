@@ -1,5 +1,5 @@
 
-public struct MapScanner<ScannerOutput, Content: Scannable>: Scannable {
+public struct MapScanner<ScannerOutput: Sendable, Content: Scannable>: Scannable {
     private let content: @Sendable () -> Content
     private let transform: @Sendable (Content.ScannerOutput) -> ScannerOutput
     
