@@ -21,5 +21,4 @@ public struct RawRepresentableScanner<ScannerOutput: RawRepresentable & Sendable
         
         return nil
     }
-
 }

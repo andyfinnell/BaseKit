@@ -41,9 +41,13 @@ public extension Color {
 }
 
 public extension Color {
-    /// Print in RGBA
+    /// Print in RGB
     var hexadecimal: String {
         "\(componentHex(red))\(componentHex(green))\(componentHex(blue))"
+    }
+    
+    var rgbString: String {
+        "#\(componentHex(red))\(componentHex(green))\(componentHex(blue))"
     }
 }
 
