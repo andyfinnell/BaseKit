@@ -36,6 +36,7 @@ public extension Color {
     static let yellow = Color(red: 1, green: 1, blue: 0, alpha: 1)
     static let orange = Color(red: 1, green: 0.5, blue: 0, alpha: 1)
     static let transparentBlack = Color(red: 0, green: 0.0, blue: 0.0, alpha: 0.0)
+    static let clear = Color(red: 0, green: 0.0, blue: 0.0, alpha: 0.0)
     
     static let pasteboard = Color(red: 0.3, green: 0.3, blue: 0.3, alpha: 1)
 }
@@ -58,6 +59,15 @@ public extension Color {
         let green = self.green - color.green
         let blue = self.blue - color.blue
         return sqrt(red * red + green * green + blue * blue)
+    }
+    
+    func linearInterpolate(at parameter: Double, to nextColor: Color) -> Color {
+        Color(
+            red: BaseKit.linearInterpolate(start: red, end: nextColor.red, time: parameter),
+            green: BaseKit.linearInterpolate(start: green, end: nextColor.green, time: parameter),
+            blue: BaseKit.linearInterpolate(start: blue, end: nextColor.blue, time: parameter),
+            alpha: BaseKit.linearInterpolate(start: alpha, end: nextColor.alpha, time: parameter)
+        )
     }
 }
 

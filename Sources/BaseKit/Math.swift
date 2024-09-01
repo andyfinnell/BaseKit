@@ -8,3 +8,7 @@ public func clamp<T: Comparable>(_ value: T, _ low: T, _ high: T) -> T {
         return value
     }
 }
+
+public func linearInterpolate(start: Double, end: Double, time: Double) -> Double {
+    start + time * (end - start)
+}
