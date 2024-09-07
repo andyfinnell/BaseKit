@@ -1,6 +1,7 @@
 import Foundation
 import os
 
+// TODO: this should be a macro usable by actors, not locked
 public final class AsyncBroadcaster<Element: Sendable>: Sendable {
     private let listeners = OSAllocatedUnfairLock(initialState: [UUID: AsyncStream<Element>.Continuation]())
     
