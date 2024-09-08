@@ -87,4 +87,28 @@ public extension Array {
         remove(at: index)
         return index
     }
+    
+    func isValidIndex(_ index: Index) -> Bool {
+        index >= startIndex && index < endIndex
+    }
+    
+    mutating func checkedRemove(at index: Index) {
+        guard isValidIndex(index) else {
+            return
+        }
+        remove(at: index)
+    }
+    
+    func updateSelectionIndex(_ index: Index) -> Index? {
+        if isValidIndex(index) {
+            return index
+        } else {
+            let newIndex = count - 1
+            if isValidIndex(newIndex) {
+                return newIndex
+            } else {
+                return nil
+            }
+        }
+    }
 }
