@@ -183,4 +183,7 @@ public extension String {
         return result
     }
 
+    func hashedString() -> String {
+        Data(self.utf8).hashedString()
+    }
 }

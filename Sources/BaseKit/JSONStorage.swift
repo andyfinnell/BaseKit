@@ -1,14 +1,14 @@
 import Foundation
 
 public protocol CodableStorage<Value>: Sendable {
-    associatedtype Value: Codable
+    associatedtype Value: Codable & Sendable
     
     func makeStream() async -> AsyncStream<Value>
     
     func store(_ value: Value) async throws
 }
 
-public final actor JSONStorage<Value: Codable>: CodableStorage {
+public final actor JSONStorage<Value: Codable & Sendable>: CodableStorage {
     private let filename: String
     private let defaultValue: () -> Value
     private var listeners = [UUID: AsyncStream<Value>.Continuation]()
