@@ -35,6 +35,32 @@ public struct XMLUpdateContentChange: Sendable {
     }
 }
 
+public enum XMLUpsertQuery: Sendable {
+    case name(String)
+}
+
+public struct XMLUpsertChange: Sendable {
+    public let parentID: XMLID? // nil means root
+    public let index: XMLIndex
+    public let factory: @Sendable () -> XMLSnapshot
+    public let existingElementQuery: XMLUpsertQuery
+    public let changesFactory: @Sendable (XMLElement) -> [XMLChange]
+    
+    public init(
+        parentID: XMLID?,
+        index: XMLIndex,
+        factory: @Sendable @escaping () -> XMLSnapshot,
+        existingElementQuery: XMLUpsertQuery,
+        changesFactory: @Sendable @escaping (XMLElement) -> [XMLChange]
+    ) {
+        self.parentID = parentID
+        self.index = index
+        self.factory = factory
+        self.existingElementQuery = existingElementQuery
+        self.changesFactory = changesFactory
+    }
+}
+
 public struct XMLAttributeUpsertChange: Sendable {
     public let elementID: XMLID
     public let attributeName: String
@@ -73,6 +99,7 @@ public enum XMLChange: Sendable {
     case create(XMLCreateChange)
     case destroy(XMLDestroyChange)
     case update(XMLUpdateContentChange)
+    case upsert(XMLUpsertChange)
     case upsertAttribute(XMLAttributeUpsertChange)
     case destroyAttribute(XMLAttributeDestroyChange)
     case reorder(XMLReorderChange)

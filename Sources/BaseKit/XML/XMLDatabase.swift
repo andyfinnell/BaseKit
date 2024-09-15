@@ -158,6 +158,8 @@ private extension XMLDatabase {
             return try perform(update, impacting: &changedObjectIDs)
         case let .reorder(reorder):
             return try perform(reorder, impacting: &changedObjectIDs)
+        case let .upsert(upsert):
+            return try perform(upsert, impacting: &changedObjectIDs)
         case let .upsertAttribute(upsertAttribute):
             return try perform(upsertAttribute, impacting: &changedObjectIDs)
         case let .destroyAttribute(destroyAttribute):
@@ -286,6 +288,71 @@ private extension XMLDatabase {
             )
         )
         return [undoChange]
+    }
+
+    func perform(
+        _ change: XMLUpsertChange,
+        impacting changedObjectIDs: inout Set<XMLDatabaseChange>
+    ) throws -> [XMLChange] {
+        // First, see if this thing already exists
+        let existing = try query(change.existingElementQuery, in: change.parentID)
+        var undoChanges = [[XMLChange]]()
+        var upsertedElement = existing
+        if existing == nil {
+            let createChange = XMLCreateChange(parentID: change.parentID,
+                                               index: change.index,
+                                               factory: change.factory)
+            let createUndoChanges = try perform(createChange, impacting: &changedObjectIDs)
+            undoChanges.append(createUndoChanges)
+            
+            // Re-run the query
+            upsertedElement = try query(change.existingElementQuery, in: change.parentID)
+        }
+        
+        guard let upsertedElement else {
+            throw XMLError.upsertFailedToCreateElement
+        }
+        
+        // Now perform the follow up actions
+        let subsequentChanges = change.changesFactory(upsertedElement)
+        for change in subsequentChanges {
+            let subsequentUndoChanges = try perform(change, impacting: &changedObjectIDs)
+            undoChanges.append(subsequentUndoChanges)
+        }
+                
+        return undoChanges.reversed().flatMap { $0 }
+    }
+
+    func query(_ upsertQuery: XMLUpsertQuery, in parentID: XMLID?) throws -> XMLElement? {
+        switch upsertQuery {
+        case let .name(name):
+            return try query(byName: name, in: childElements(for: parentID))
+        }
+    }
+
+    func childElements(for parentID: XMLID?) throws -> [XMLElement] {
+        if let parentID {
+            guard let parent = element(byID: parentID) else {
+                throw XMLError.valueNotFound(parentID)
+            }
+            return childElements(for: parent)
+        } else {
+            return rootElements
+        }
+    }
+    
+    var rootElements: [XMLElement] {
+        rootValues.compactMap { value in
+            if case let .element(element) = value {
+                return element
+            } else {
+                return nil
+            }
+        }
+    }
+    
+    func query(byName name: String, in elements: [XMLElement]) -> XMLElement? {
+        elements.first(where: { $0.name == name })
     }
 
     func perform(

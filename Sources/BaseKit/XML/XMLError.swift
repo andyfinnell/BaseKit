@@ -7,4 +7,5 @@ public enum XMLError: Error {
     case invalidElement
     case notAnElement
     case indexOutOfBounds
+    case upsertFailedToCreateElement
 }

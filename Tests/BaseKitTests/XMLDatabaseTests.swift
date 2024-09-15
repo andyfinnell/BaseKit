@@ -105,11 +105,231 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(changes, expectedIDs)
     }
     
+    func testCommitUpsertElementWhenNotExisting() throws {
+        let rootID = subject.rootValues.first?.id
+        let whitespace1ID = XMLID()
+        let elementID = XMLID()
+        let whitespace2ID = XMLID()
+        let colorWhitespace1ID = XMLID()
+        let colorID = XMLID()
+        let colorWhitespace2ID = XMLID()
+        
+        let addDefs = XMLCommand(
+            name: "Add definitions",
+            changes: [
+                .upsert(
+                    XMLUpsertChange(
+                        parentID: rootID,
+                        index: .at(0),
+                        factory: {
+                            XMLSnapshot(
+                                XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace1ID, parentID: rootID, text: "\n  ")),
+                                XMLValue.element(
+                                    XMLElement(
+                                        id: elementID,
+                                        parentID: rootID,
+                                        name: "defs",
+                                        namespaceURI: nil,
+                                        qualifiedName: nil,
+                                        attributes: [:],
+                                        children: []
+                                    )
+                                ),
+                                XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace2ID, parentID: rootID, text: "\n"))
+                            )
+                        },
+                        existingElementQuery: .name("defs"),
+                        changesFactory: { defsElement in
+                            return [
+                                XMLChange.create(
+                                    XMLCreateChange(
+                                        parentID: defsElement.id,
+                                        index: .last,
+                                        factory: {
+                                            XMLSnapshot(
+                                                XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: colorWhitespace1ID, parentID: defsElement.id, text: "\n    ")),
+                                                XMLValue.element(
+                                                    XMLElement(
+                                                        id: colorID,
+                                                        parentID: defsElement.id,
+                                                        name: "solidColor",
+                                                        namespaceURI: nil,
+                                                        qualifiedName: nil,
+                                                        attributes: [
+                                                            "solid-color": "#FFF",
+                                                        ],
+                                                        children: []
+                                                    )
+                                                ),
+                                                XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: colorWhitespace2ID, parentID: defsElement.id, text: "\n  "))
+                                            )
+                                            
+                                        })
+                                )
+                            ]
+                        }
+                    )
+                ),
+            ]
+        )
+        let (_, changes) = try subject.perform(addDefs)
+        
+        let output = try subject.text()
+        
+        let expected = """
+            <svg height="200" version="1.1" width="300" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <solidColor solid-color="#FFF" />
+              </defs>
+            
+            
+              <rect fill="red" height="100%" width="100%" />
+            
+              <circle cx="150" cy="100" fill="green" r="80" />
+            
+              <text fill="white" font-size="60" text-anchor="middle" x="150" y="125">SVG</text>
+            
+            </svg>
+            """
+        
+        XCTAssertEqual(output, expected)
+        
+        let expectedIDs = Set([
+            XMLDatabaseChange.value(rootID!),
+            XMLDatabaseChange.value(whitespace1ID),
+            XMLDatabaseChange.value(elementID),
+            XMLDatabaseChange.value(whitespace2ID),
+            XMLDatabaseChange.value(colorWhitespace1ID),
+            XMLDatabaseChange.value(colorID),
+            XMLDatabaseChange.value(colorWhitespace2ID),
+            
+        ])
+        XCTAssertEqual(changes, expectedIDs)
+    }
+    
+    func testCommitUpsertElementWhenExisting() throws {
+        let svgString = """
+            <svg version="1.1"
+                 width="300" height="200"
+                 xmlns="http://www.w3.org/2000/svg">
+            
+              <defs>
+              </defs>
+            
+              <rect width="100%" height="100%" fill="red" />
+            
+              <circle cx="150" cy="100" r="80" fill="green" />
+            
+              <text x="150" y="125" font-size="60" text-anchor="middle" fill="white">SVG</text>
+            
+            </svg>
+            """
+        subject = try XMLDatabase(text: svgString)
+
+        let rootID = subject.rootValues.first?.id
+        let defsID = subject[.element("svg").element("defs")]!.id
+        let whitespace1ID = XMLID()
+        let elementID = XMLID()
+        let whitespace2ID = XMLID()
+        let colorWhitespace1ID = XMLID()
+        let colorID = XMLID()
+        let colorWhitespace2ID = XMLID()
+        
+        let addDefs = XMLCommand(
+            name: "Add definitions",
+            changes: [
+                .upsert(
+                    XMLUpsertChange(
+                        parentID: rootID,
+                        index: .at(0),
+                        factory: {
+                            XMLSnapshot(
+                                XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace1ID, parentID: rootID, text: "\n  ")),
+                                XMLValue.element(
+                                    XMLElement(
+                                        id: elementID,
+                                        parentID: rootID,
+                                        name: "defs",
+                                        namespaceURI: nil,
+                                        qualifiedName: nil,
+                                        attributes: [:],
+                                        children: []
+                                    )
+                                ),
+                                XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace2ID, parentID: rootID, text: "\n"))
+                            )
+                        },
+                        existingElementQuery: .name("defs"),
+                        changesFactory: { defsElement in
+                            return [
+                                XMLChange.create(
+                                    XMLCreateChange(
+                                        parentID: defsElement.id,
+                                        index: .last,
+                                        factory: {
+                                            XMLSnapshot(
+                                                XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: colorWhitespace1ID, parentID: defsElement.id, text: "  ")),
+                                                XMLValue.element(
+                                                    XMLElement(
+                                                        id: colorID,
+                                                        parentID: defsElement.id,
+                                                        name: "solidColor",
+                                                        namespaceURI: nil,
+                                                        qualifiedName: nil,
+                                                        attributes: [
+                                                            "solid-color": "#FFF",
+                                                        ],
+                                                        children: []
+                                                    )
+                                                ),
+                                                XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: colorWhitespace2ID, parentID: defsElement.id, text: "\n  "))
+                                            )
+                                            
+                                        })
+                                )
+                            ]
+                        }
+                    )
+                ),
+            ]
+        )
+        let (_, changes) = try subject.perform(addDefs)
+        
+        let output = try subject.text()
+        
+        let expected = """
+            <svg height="200" version="1.1" width="300" xmlns="http://www.w3.org/2000/svg">
+            
+              <defs>
+                <solidColor solid-color="#FFF" />
+              </defs>
+            
+              <rect fill="red" height="100%" width="100%" />
+            
+              <circle cx="150" cy="100" fill="green" r="80" />
+            
+              <text fill="white" font-size="60" text-anchor="middle" x="150" y="125">SVG</text>
+            
+            </svg>
+            """
+        
+        XCTAssertEqual(output, expected)
+        
+        let expectedIDs = Set([
+            XMLDatabaseChange.value(defsID),
+            XMLDatabaseChange.value(colorWhitespace1ID),
+            XMLDatabaseChange.value(colorID),
+            XMLDatabaseChange.value(colorWhitespace2ID),
+            
+        ])
+        XCTAssertEqual(changes, expectedIDs)
+    }
+
     func testCommitDestroyObject() throws {
         let rootID = subject.rootValues.first?.id
         let text = subject[XMLPath.element("svg").element("text")]
         let textText = subject[XMLPath.element("svg").element("text").text()]
-
+        
         let deleteText = XMLCommand(
             name: "Delete rect",
             changes: [
@@ -141,7 +361,7 @@ final class XMLDatabaseTests: XCTestCase {
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
-
+    
     func testCommitUpdateContentText() throws {
         let textText = subject[XMLPath.element("svg").element("text").text()]
         let updateText = XMLCommand(
@@ -173,7 +393,7 @@ final class XMLDatabaseTests: XCTestCase {
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
-
+    
     func testCommitAttributeInsert() throws {
         let circle = subject[XMLPath.element("svg").element("circle")]
         let updateCircle = XMLCommand(
@@ -206,7 +426,7 @@ final class XMLDatabaseTests: XCTestCase {
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
-
+    
     func testCommitAttributeUpdate() throws {
         let text = subject[XMLPath.element("svg").element("text")]
         let updateText = XMLCommand(
@@ -238,7 +458,7 @@ final class XMLDatabaseTests: XCTestCase {
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
-
+    
     func testCommitAttributeRemove() throws {
         let text = subject[XMLPath.element("svg").element("text")]
         let updateText = XMLCommand(
@@ -270,7 +490,7 @@ final class XMLDatabaseTests: XCTestCase {
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
-
+    
     func testCommitReorder() throws {
         let svg = subject[XMLPath.element("svg")]
         let updateText = XMLCommand(
@@ -290,7 +510,7 @@ final class XMLDatabaseTests: XCTestCase {
               <rect fill="red" height="100%" width="100%" />
             
               <text fill="white" font-size="60" text-anchor="middle" x="150" y="125">SVG</text>
-
+            
               <circle cx="150" cy="100" fill="green" r="80" />
             
             </svg>
@@ -303,10 +523,10 @@ final class XMLDatabaseTests: XCTestCase {
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
-
+    
     func testUndo() throws {
         let text = subject[XMLPath.element("svg").element("text")]
-
+        
         let deleteText = XMLCommand(
             name: "Delete rect",
             changes: [
@@ -327,10 +547,10 @@ final class XMLDatabaseTests: XCTestCase {
               <circle cx="150" cy="100" fill="green" r="80" />
             
               <text fill="white" font-size="60" text-anchor="middle" x="150" y="125">SVG</text>
-
+            
             </svg>
             """
-
+        
         XCTAssertEqual(output, expected)
     }
     
