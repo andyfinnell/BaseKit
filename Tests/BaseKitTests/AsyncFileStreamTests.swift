@@ -31,7 +31,7 @@ final class AsyncFileStreamTests: XCTestCase {
         try data.write(to: fileURL)
         
         let subject = try fileURL.openForReading()
-        let readData = try await subject.read(upToCount: 4)
+        let readData = try await subject.readData(upToCount: 4)
         XCTAssert(readData == data)
         
         subject.close()
@@ -67,7 +67,7 @@ final class AsyncFileStreamTests: XCTestCase {
         
         // Read in
         let readStream = try fileURL.openForReading()
-        let readData = try await readStream.read(upToCount: 8)
+        let readData = try await readStream.readData(upToCount: 8)
         XCTAssert(readData == expectedData)
             
         readStream.close()
@@ -87,7 +87,7 @@ final class AsyncFileStreamTests: XCTestCase {
         
         // Read in
         let readStream = try fileURL.openForReading()
-        let readData = try await readStream.read(upToCount: 4)
+        let readData = try await readStream.readData(upToCount: 4)
         XCTAssert(readData == bytes)
             
         readStream.close()
@@ -99,7 +99,7 @@ final class AsyncFileStreamTests: XCTestCase {
         try data.write(to: fileURL)
         
         let subject = try fileURL.openForReading()
-        let readData = try await subject.read(upToCount: 4)
+        let readData = try await subject.readData(upToCount: 4)
         XCTAssert(readData == data)
         
         subject.close()
@@ -111,7 +111,7 @@ final class AsyncFileStreamTests: XCTestCase {
         try data.write(to: fileURL)
         
         let subject = try fileURL.openForReading()
-        let readData = try await subject.read(upToCount: 8)
+        let readData = try await subject.readData(upToCount: 8)
         XCTAssert(readData == data)
         
         subject.close()
@@ -124,7 +124,7 @@ final class AsyncFileStreamTests: XCTestCase {
         
         let subject = try fileURL.openForReading()
         _ = try await subject.read(upToCount: 4) // read what's there
-        let readData = try await subject.read(upToCount: 4)
+        let readData = try await subject.readData(upToCount: 4)
         XCTAssert(readData.isEmpty)
         
         subject.close()

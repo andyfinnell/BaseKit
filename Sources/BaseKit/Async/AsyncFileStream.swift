@@ -5,7 +5,12 @@ public extension Data {
     /// will throw an error if it's not a file URL.
     init(asyncContentsOf url: URL) async throws {
         let stream = try url.openForReading()
-        self = try await Data(stream.readToEnd())
+        var allData = Data()
+        let bytes = try await stream.readToEnd()
+        for await data in bytes {
+            allData.append(data)
+        }
+        self = allData
     }
     
     /// Asynchronously write the contents of self into the fileURL.
@@ -108,28 +113,32 @@ public struct AsyncFileStream<Mode>: ~Copyable {
 /// Methods available in read mode
 public extension AsyncFileStream where Mode == ReadMode {
     /// Read the entire contents of the file in one go
-    func readToEnd() async throws -> DispatchData {
+    func readToEnd() async throws -> AsyncStream<Data> {
         try await read(upToCount: .max)
     }
     
-    /// Read the next `length` bytes.
-    func read(upToCount length: Int) async throws -> DispatchData {
-        try await withCheckedThrowingContinuation { continuation in
-            var readData = DispatchData.empty
-            io.read(offset: 0, length: length, queue: queue) { done, data, error in
-                if let data {
-                    readData.append(data)
-                }
-                guard done else {
-                    return // not done yet
-                }
-                if error != 0 {
-                    continuation.resume(throwing: AsyncFileStreamError.readError(error))
-                } else {
-                    continuation.resume(returning: readData)
-                }
-            }
+    func readData(upToCount length: Int) async throws -> Data {
+        let stream = try await read(upToCount: length)
+        var allData = Data()
+        for await data in stream {
+            allData.append(data)
         }
+        return allData
+    }
+    
+    /// Read the next `length` bytes.
+    func read(upToCount length: Int) async throws -> AsyncStream<Data> {
+        let (stream, continuation) = AsyncStream.makeStream(of: Data.self)
+        io.read(offset: 0, length: length, queue: queue) { done, data, error in
+            if let data {
+                continuation.yield(Data(data))
+            }
+            guard done else {
+                return // not done yet
+            }
+            continuation.finish()
+        }
+        return stream
     }
 }
 

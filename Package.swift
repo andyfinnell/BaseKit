@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -26,15 +26,9 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "BaseKit",
-            dependencies: [], 
-            swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency")
-            ]),
+            dependencies: []),
         .testTarget(
             name: "BaseKitTests",
-            dependencies: ["BaseKit", "TestKit"],
-            swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency")
-            ]),
+            dependencies: ["BaseKit", "TestKit"]),
     ]
 )

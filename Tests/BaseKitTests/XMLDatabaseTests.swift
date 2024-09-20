@@ -560,7 +560,7 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertNil(subject[XMLPath.element("svg").whitespace()])
     }
     
-    private func assertElement(_ value: XMLValue?, withName name: String, file: StaticString = #file, line: UInt = #line) {
+    private func assertElement(_ value: XMLValue?, withName name: String, file: StaticString = #filePath, line: UInt = #line) {
         guard case let .element(element) = value else {
             XCTFail("Expected \(String(describing: value)) to be an element with name \(name)", file: file, line: line)
             return
@@ -568,7 +568,7 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(element.name, name, "Expected \(element) to hae name \(name)", file: file, line: line)
     }
     
-    private func assertText(_ value: XMLValue?, withContent content: String, file: StaticString = #file, line: UInt = #line) {
+    private func assertText(_ value: XMLValue?, withContent content: String, file: StaticString = #filePath, line: UInt = #line) {
         guard case let .text(text) = value else {
             XCTFail("Expected \(String(describing: value)) to be text with content \(content)", file: file, line: line)
             return
