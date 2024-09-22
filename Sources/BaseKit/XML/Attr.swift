@@ -7,6 +7,11 @@ public struct Attr: XML {
         self.value = value
     }
     
+    public init<V: XMLFormattable>(_ name: String, _ value: V) {
+        self.name = name
+        self.value = value.xmlFormatted()
+    }
+    
     public var attributes: [String: String] {
         [name: value]
     }
