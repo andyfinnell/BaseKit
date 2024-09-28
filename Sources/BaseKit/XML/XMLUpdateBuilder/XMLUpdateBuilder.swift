@@ -1,5 +1,13 @@
 @resultBuilder
 public struct XMLUpdateBuilder {
+    public static func buildBlock() -> EmptyXMLUpdate {
+        EmptyXMLUpdate()
+    }
+    
+    public static func buildBlock<X: XMLUpdate>(_ component: X) -> X {
+        component
+    }
+
     public static func buildBlock<each X: XMLUpdate>(_ components: repeat each X) -> TupleXMLUpdate<repeat each X> {
         TupleXMLUpdate((repeat each components))
     }

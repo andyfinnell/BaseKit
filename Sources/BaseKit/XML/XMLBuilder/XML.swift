@@ -26,6 +26,7 @@ public protocol XMLImpl {
 public protocol XML: XMLImpl {
     associatedtype Body: XML
     
+    @XMLSnapshotBuilder
     var body: Body { get }
 }
 

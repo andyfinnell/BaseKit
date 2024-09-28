@@ -1,6 +1,14 @@
 
 @resultBuilder
 public struct XMLSnapshotBuilder {
+    public static func buildBlock() -> EmptyXML {
+        EmptyXML()
+    }
+
+    public static func buildBlock<X: XML>(_ component: X) -> X {
+        component
+    }
+
     public static func buildBlock<each X: XML>(_ components: repeat each X) -> TupleXML<repeat each X> {
         TupleXML((repeat each components))
     }

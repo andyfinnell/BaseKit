@@ -5,6 +5,7 @@ public protocol XMLUpdateImpl {
 public protocol XMLUpdate: XMLUpdateImpl {
     associatedtype Body: XMLUpdate
     
+    @XMLUpdateBuilder
     var body: Body { get }
 }
 
