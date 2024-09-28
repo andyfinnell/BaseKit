@@ -8,6 +8,14 @@ public struct XMLBuilderContext {
     public func increaseIndent() -> XMLBuilderContext {
         XMLBuilderContext(indent: indent + 1)
     }
+
+    public func decreaseIndent() -> XMLBuilderContext {
+        XMLBuilderContext(indent: max(0, indent - 1))
+    }
+
+    var indentString: String {
+        String(repeating: " ", count: (indent * 2))
+    }
 }
 
 public protocol XMLImpl {

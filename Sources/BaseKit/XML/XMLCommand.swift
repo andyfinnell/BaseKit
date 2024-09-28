@@ -5,12 +5,24 @@ public enum XMLIndex: Hashable, Sendable {
     case at(Int)
 }
 
+public struct XMLCreateContext: Sendable {
+    public let indent: Int
+    public let isFirst: Bool
+    public let isLast: Bool
+    
+    public init(indent: Int, isFirst: Bool, isLast: Bool) {
+        self.indent = indent
+        self.isFirst = isFirst
+        self.isLast = isLast
+    }
+}
+
 public struct XMLCreateChange: Sendable {
     public let parentID: XMLID? // nil means root
     public let index: XMLIndex
-    public let factory: @Sendable () -> XMLSnapshot
+    public let factory: @Sendable (XMLCreateContext) -> XMLSnapshot
     
-    public init(parentID: XMLID?, index: XMLIndex, factory: @escaping @Sendable () -> XMLSnapshot) {
+    public init(parentID: XMLID?, index: XMLIndex, factory: @escaping @Sendable (XMLCreateContext) -> XMLSnapshot) {
         self.parentID = parentID
         self.index = index
         self.factory = factory
@@ -42,14 +54,14 @@ public enum XMLUpsertQuery: Sendable {
 public struct XMLUpsertChange: Sendable {
     public let parentID: XMLID? // nil means root
     public let index: XMLIndex
-    public let factory: @Sendable () -> XMLSnapshot
+    public let factory: @Sendable (XMLCreateContext) -> XMLSnapshot
     public let existingElementQuery: XMLUpsertQuery
     public let changesFactory: @Sendable (XMLElement) -> [XMLChange]
     
     public init(
         parentID: XMLID?,
         index: XMLIndex,
-        factory: @Sendable @escaping () -> XMLSnapshot,
+        factory: @Sendable @escaping (XMLCreateContext) -> XMLSnapshot,
         existingElementQuery: XMLUpsertQuery,
         changesFactory: @Sendable @escaping (XMLElement) -> [XMLChange]
     ) {
@@ -112,5 +124,10 @@ public struct XMLCommand: Sendable {
     public init(name: String, changes: [XMLChange]) {
         self.name = name
         self.changes = changes
+    }
+    
+    public init<X: XMLUpdate>(_ name: String, @XMLUpdateBuilder changes: () -> X) {
+        self.name = name
+        self.changes = changes().changes(for: nil)
     }
 }

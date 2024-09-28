@@ -8,6 +8,7 @@ public struct Element<Content: XML>: XML {
     }
     
     public var attributes: [String: String] { [:] }
+    
     public func values(for parentID: XMLID?, context: XMLBuilderContext, storingInto storage: inout [XMLID: XMLValue]) -> [XMLValue] {
         let childContent = content()
         let attrs = childContent.attributes
@@ -61,10 +62,4 @@ public struct Element<Content: XML>: XML {
     }
     
     public var body: Never { fatalError() }
-}
-
-private extension XMLBuilderContext {
-    var indentString: String {
-        String(repeating: " ", count: (indent * 2))
-    }
 }

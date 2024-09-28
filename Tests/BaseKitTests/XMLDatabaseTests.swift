@@ -55,7 +55,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .create(
                     XMLCreateChange(parentID: rootID,
                                     index: .last,
-                                    factory: {
+                                    factory: { _ in
                                         XMLSnapshot(
                                             XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace1ID, parentID: rootID, text: "  ")),
                                             XMLValue.element(
@@ -121,7 +121,7 @@ final class XMLDatabaseTests: XCTestCase {
                     XMLUpsertChange(
                         parentID: rootID,
                         index: .at(0),
-                        factory: {
+                        factory: { _ in
                             XMLSnapshot(
                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace1ID, parentID: rootID, text: "\n  ")),
                                 XMLValue.element(
@@ -145,7 +145,7 @@ final class XMLDatabaseTests: XCTestCase {
                                     XMLCreateChange(
                                         parentID: defsElement.id,
                                         index: .last,
-                                        factory: {
+                                        factory: { _ in
                                             XMLSnapshot(
                                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: colorWhitespace1ID, parentID: defsElement.id, text: "\n    ")),
                                                 XMLValue.element(
@@ -242,7 +242,7 @@ final class XMLDatabaseTests: XCTestCase {
                     XMLUpsertChange(
                         parentID: rootID,
                         index: .at(0),
-                        factory: {
+                        factory: { _ in
                             XMLSnapshot(
                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace1ID, parentID: rootID, text: "\n  ")),
                                 XMLValue.element(
@@ -266,7 +266,7 @@ final class XMLDatabaseTests: XCTestCase {
                                     XMLCreateChange(
                                         parentID: defsElement.id,
                                         index: .last,
-                                        factory: {
+                                        factory: { _ in
                                             XMLSnapshot(
                                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: colorWhitespace1ID, parentID: defsElement.id, text: "  ")),
                                                 XMLValue.element(

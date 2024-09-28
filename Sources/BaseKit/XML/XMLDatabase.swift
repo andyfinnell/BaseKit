@@ -171,7 +171,7 @@ private extension XMLDatabase {
         _ change: XMLCreateChange,
         impacting changedObjectIDs: inout Set<XMLDatabaseChange>
     ) throws -> [XMLChange] {
-        let new = change.factory()
+        let new = change.factory(createContext(forInsertingInto: change.parentID, at: change.index))
         register(new)
         
         // Perform the actual change
@@ -222,7 +222,7 @@ private extension XMLDatabase {
             XMLCreateChange(
                 parentID: old.parentID,
                 index: oldIndex,
-                factory: { oldSnapshot }
+                factory: { _ in oldSnapshot }
             )
         )
         return [undoChange]
@@ -482,5 +482,95 @@ private extension XMLDatabase {
             snapshotValues[value.id] = value
         }
         return XMLSnapshot(roots: [rootID], values: snapshotValues)
+    }
+    
+    func createContext(forInsertingInto parentID: XMLID?, at index: XMLIndex) -> XMLCreateContext {
+        guard let parentID else {
+            // Root is a special case
+            return XMLCreateContext(indent: 0, isFirst: false, isLast: false)
+        }
+        let createIndent = indent(of: parentID) + 1
+        let existingChildValues = element(byID: parentID).map { childValues(for: $0) } ?? []
+        
+        return XMLCreateContext(
+            indent: createIndent,
+            isFirst: existingChildValues.isEmpty || index == .at(0),
+            isLast: existingChildValues.isEmpty || index == .last || index == .at(existingChildValues.count)
+        )
+    }
+    
+    func indent(of id: XMLID?) -> Int {
+        // Go back until we find the first newline, then count forward until
+        //  we hit the first non-whitespace character
+        guard let id, let value = values[id] else {
+            return 0
+        }
+        if let parentID = value.parentID, let parent = element(byID: parentID) {
+            let previousSiblings = childValues(for: parent)
+                .prefix(while: { $0.id != id })
+            if let indent = indent(of: Array(previousSiblings)) {
+                return indent
+            } else {
+                // need to recurse upwards the XML tree
+                return indent(of: parentID)
+            }
+        } else {
+            let previousSiblings = rootValues.prefix(while: { $0.id != id })
+            if let indent = indent(of: Array(previousSiblings)) {
+                return indent
+            } else {
+                // we're at the root, so must not be an indent
+                return 0
+            }
+        }
+    }
+    
+    
+    func indent(of previousSiblings: [XMLValue]) -> Int? {
+        var buffer = ""
+        for prior in previousSiblings.reversed() {
+            switch prior {
+            case .element, .cdata, .comment:
+                buffer = "" // reset the buffer
+            case let .text(text):
+                if let indent = updateIndentBuffer(&buffer, with: text.characters) {
+                    return indent
+                }
+            case let .ignorableWhitespace(whitespace):
+                if let indent = updateIndentBuffer(&buffer, with: whitespace.text) {
+                    return indent
+                }
+            }
+        }
+        return nil
+    }
+    
+    func updateIndentBuffer(_ buffer: inout String, with text: String) -> Int? {
+        if let newlineIndex = text.lastIndex(of: "\n") {
+            let characters = String(text[newlineIndex..<text.endIndex].dropFirst())
+            buffer = characters + buffer
+            return countIndent(of: buffer)
+        } else {
+            // No newline yet, so prepend it to be processed later
+            buffer = text + buffer
+            return nil
+        }
+    }
+    
+    func countIndent(of text: String) -> Int {
+        let spacesPerTab = 2
+        
+        var indent = 0
+        for c in text {
+            if c == " " {
+                indent += 1
+            } else if c == "\t" {
+                indent += spacesPerTab
+            } else {
+                break // stop
+            }
+        }
+        
+        return Int(ceil(Double(indent) / Double(spacesPerTab)))
     }
 }

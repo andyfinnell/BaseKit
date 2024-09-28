@@ -22,11 +22,32 @@ public extension XMLSnapshot {
         }
     }
     
-    init<Content: XML>(parentID: XMLID?, @XMLSnapshotBuilder builder: () -> Content) {
+    init<Content: XML>(parentID: XMLID?, createContext: XMLCreateContext, @XMLSnapshotBuilder builder: () -> Content) {
         let built = builder()
         var storage = [XMLID: XMLValue]()
-        let context = XMLBuilderContext()
-        roots = built.values(for: parentID, context: context, storingInto: &storage).map(\.id)
+        let context = XMLBuilderContext(indent: createContext.indent)
+        var allRootValues = [XMLValue]()
+        
+        let prefixString: String
+        if createContext.isFirst {
+            prefixString = "\n\(context.indentString)"
+        } else {
+            prefixString = "\(context.indentString)"
+        }
+        let prefixText = XMLText(id: XMLID(), parentID: parentID, characters: prefixString)
+        storage[prefixText.id] = .text(prefixText)
+        allRootValues.append(.text(prefixText))
+
+        allRootValues.append(contentsOf: built.values(for: parentID, context: context, storingInto: &storage))
+        
+        if createContext.isLast {
+            let postfixString = "\n\(context.decreaseIndent().indentString)"
+            let postfixText = XMLText(id: XMLID(), parentID: parentID, characters: postfixString)
+            storage[postfixText.id] = .text(postfixText)
+            allRootValues.append(.text(postfixText))
+        }
+        
+        roots = allRootValues.map(\.id)
         values = storage
     }
 }
