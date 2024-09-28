@@ -1,8 +1,8 @@
 public struct WithXML<Content: XMLUpdate>: XMLUpdate {
-    private let id: XMLID
+    private let id: XMLID?
     private let content: () -> Content
     
-    public init(id: XMLID, @XMLUpdateBuilder content: @escaping () -> Content) {
+    public init(id: XMLID?, @XMLUpdateBuilder content: @escaping () -> Content) {
         self.id = id
         self.content = content
     }
