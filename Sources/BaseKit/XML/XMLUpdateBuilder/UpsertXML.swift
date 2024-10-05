@@ -25,7 +25,7 @@ public struct UpsertXML<Content: XML, Changes: XMLUpdate>: XMLUpdate {
                     parentID: parentID,
                     index: index,
                     factory: { createContext in
-                        XMLSnapshot(parentID: parentID, createContext: createContext, builder: theContent)
+                        XMLPartialSnapshot(parentID: parentID, createContext: createContext, builder: theContent)
                     },
                     existingElementQuery: existingElement,
                     changesFactory: { element in

@@ -3,10 +3,20 @@ import Foundation
 public final class XMLDatabase {
     private var roots = [XMLID]()
     private var values = [XMLID: XMLValue]()
-        
+    private var referenceIDs: Set<String>
+    
     init(roots: [XMLID], values: [XMLID: XMLValue]) {
         self.roots = roots
         self.values = values
+        
+        let refIDs = values.values.compactMap { value in
+            if case let .element(element) = value {
+                return element.attributes["xml:id"]
+            } else {
+                return nil
+            }
+        }
+        self.referenceIDs = Set(refIDs)
     }
     
     public var snapshot: XMLSnapshot {
@@ -53,8 +63,13 @@ public final class XMLDatabase {
         var undoLog = [XMLChange]()
         do {
             var changedObjectIDs = Set<XMLDatabaseChange>()
+            let commandContext = CommandContext()
             for change in command.changes {
-                let undoChanges = try perform(change, impacting: &changedObjectIDs)
+                let undoChanges = try perform(
+                    change,
+                    impacting: &changedObjectIDs,
+                    in: commandContext
+                )
                 undoLog.append(contentsOf: undoChanges)
             }
             
@@ -69,6 +84,26 @@ public final class XMLDatabase {
 }
 
 private extension XMLDatabase {
+    final class CommandContext {
+        private var referenceIDs = [String: String]()
+        
+        init() {}
+        
+        func register(_ resolvedID: String, forFuture future: XMLReferenceIDFuture) {
+            referenceIDs[future.name] = resolvedID
+        }
+        
+        func resolveFuture(_ future: XMLReferenceIDFuture) -> String? {
+            referenceIDs[future.name]
+        }
+        
+        var variables: [String: String] { referenceIDs }
+        
+        func updateContext() -> XMLUpdateContext {
+            XMLUpdateContext(variables: variables)
+        }
+    }
+    
     func resolve(_ path: [XMLPathSegment], from roots: [XMLID], on currentValue: XMLValue?) -> XMLValue? {
         guard let nextSegment = path.first else {
             return currentValue // done!
@@ -136,9 +171,10 @@ private extension XMLDatabase {
     func rollback(_ undoChanges: [XMLChange])  {
         // Best effort rollback
         var changedIDs = Set<XMLDatabaseChange>()
+        let context = CommandContext()
         for change in undoChanges {
             do {
-                _ = try perform(change, impacting: &changedIDs)
+                _ = try perform(change, impacting: &changedIDs, in: context)
             } catch {
                 // eat it
             }
@@ -147,32 +183,40 @@ private extension XMLDatabase {
     
     func perform(
         _ change: XMLChange,
-        impacting changedObjectIDs: inout Set<XMLDatabaseChange>
+        impacting changedObjectIDs: inout Set<XMLDatabaseChange>,
+        in context: CommandContext
     ) throws -> [XMLChange] {
         switch change {
         case let .create(create):
-            return try perform(create, impacting: &changedObjectIDs)
+            return try perform(create, impacting: &changedObjectIDs, in: context)
         case let .destroy(destroy):
-            return try perform(destroy, impacting: &changedObjectIDs)
+            return try perform(destroy, impacting: &changedObjectIDs, in: context)
         case let .update(update):
-            return try perform(update, impacting: &changedObjectIDs)
+            return try perform(update, impacting: &changedObjectIDs, in: context)
         case let .reorder(reorder):
-            return try perform(reorder, impacting: &changedObjectIDs)
+            return try perform(reorder, impacting: &changedObjectIDs, in: context)
         case let .upsert(upsert):
-            return try perform(upsert, impacting: &changedObjectIDs)
+            return try perform(upsert, impacting: &changedObjectIDs, in: context)
         case let .upsertAttribute(upsertAttribute):
-            return try perform(upsertAttribute, impacting: &changedObjectIDs)
+            return try perform(upsertAttribute, impacting: &changedObjectIDs, in: context)
         case let .destroyAttribute(destroyAttribute):
-            return try perform(destroyAttribute, impacting: &changedObjectIDs)
+            return try perform(destroyAttribute, impacting: &changedObjectIDs, in: context)
         }
     }
     
     func perform(
         _ change: XMLCreateChange,
-        impacting changedObjectIDs: inout Set<XMLDatabaseChange>
+        impacting changedObjectIDs: inout Set<XMLDatabaseChange>,
+        in context: CommandContext
     ) throws -> [XMLChange] {
-        let new = change.factory(createContext(forInsertingInto: change.parentID, at: change.index))
-        register(new)
+        let new = change.factory(
+            createContext(
+                forInsertingInto: change.parentID,
+                at: change.index,
+                commandContext: context
+            )
+        )
+        register(new, in: context)
         
         // Perform the actual change
         try insert(new.roots, into: change.parentID, at: change.index)
@@ -194,7 +238,8 @@ private extension XMLDatabase {
     
     func perform(
         _ change: XMLDestroyChange,
-        impacting changedObjectIDs: inout Set<XMLDatabaseChange>
+        impacting changedObjectIDs: inout Set<XMLDatabaseChange>,
+        in context: CommandContext
     ) throws -> [XMLChange] {
         guard let old = values[change.id] else {
             throw XMLError.valueNotFound(change.id)
@@ -230,7 +275,8 @@ private extension XMLDatabase {
     
     func perform(
         _ change: XMLUpdateContentChange,
-        impacting changedObjectIDs: inout Set<XMLDatabaseChange>
+        impacting changedObjectIDs: inout Set<XMLDatabaseChange>,
+        in context: CommandContext
     ) throws -> [XMLChange] {
         guard let existing = values[change.valueID] else {
             throw XMLError.valueNotFound(change.valueID)
@@ -257,7 +303,8 @@ private extension XMLDatabase {
     
     func perform(
         _ change: XMLReorderChange,
-        impacting changedObjectIDs: inout Set<XMLDatabaseChange>
+        impacting changedObjectIDs: inout Set<XMLDatabaseChange>,
+        in context: CommandContext
     ) throws -> [XMLChange] {
         // Make the change
         if let parentID = change.parentID {
@@ -292,7 +339,8 @@ private extension XMLDatabase {
 
     func perform(
         _ change: XMLUpsertChange,
-        impacting changedObjectIDs: inout Set<XMLDatabaseChange>
+        impacting changedObjectIDs: inout Set<XMLDatabaseChange>,
+        in context: CommandContext
     ) throws -> [XMLChange] {
         // First, see if this thing already exists
         let existing = try query(change.existingElementQuery, in: change.parentID)
@@ -302,7 +350,7 @@ private extension XMLDatabase {
             let createChange = XMLCreateChange(parentID: change.parentID,
                                                index: change.index,
                                                factory: change.factory)
-            let createUndoChanges = try perform(createChange, impacting: &changedObjectIDs)
+            let createUndoChanges = try perform(createChange, impacting: &changedObjectIDs, in: context)
             undoChanges.append(createUndoChanges)
             
             // Re-run the query
@@ -316,7 +364,7 @@ private extension XMLDatabase {
         // Now perform the follow up actions
         let subsequentChanges = change.changesFactory(upsertedElement)
         for change in subsequentChanges {
-            let subsequentUndoChanges = try perform(change, impacting: &changedObjectIDs)
+            let subsequentUndoChanges = try perform(change, impacting: &changedObjectIDs, in: context)
             undoChanges.append(subsequentUndoChanges)
         }
                 
@@ -357,7 +405,8 @@ private extension XMLDatabase {
 
     func perform(
         _ change: XMLAttributeUpsertChange,
-        impacting changedObjectIDs: inout Set<XMLDatabaseChange>
+        impacting changedObjectIDs: inout Set<XMLDatabaseChange>,
+        in context: CommandContext
     ) throws -> [XMLChange] {
         guard let existing = values[change.elementID] else {
             throw XMLError.valueNotFound(change.elementID)
@@ -365,7 +414,10 @@ private extension XMLDatabase {
         let oldValue = try existing.attribute(for: change.attributeName)
         
         // Make the change
-        values[change.elementID] = try existing.updateAttribute(change.attributeValue, for: change.attributeName)
+        values[change.elementID] = try existing.updateAttribute(
+            change.attributeValue(context.updateContext()),
+            for: change.attributeName
+        )
         
         // Make note of what changed
         changedObjectIDs.insert(.value(change.elementID))
@@ -377,7 +429,7 @@ private extension XMLDatabase {
                 XMLAttributeUpsertChange(
                     elementID: change.elementID,
                     attributeName: change.attributeName,
-                    attributeValue: oldValue
+                    attributeValue: { _ in oldValue }
                 )
             )
         } else {
@@ -393,13 +445,13 @@ private extension XMLDatabase {
 
     func perform(
         _ change: XMLAttributeDestroyChange,
-        impacting changedObjectIDs: inout Set<XMLDatabaseChange>
+        impacting changedObjectIDs: inout Set<XMLDatabaseChange>,
+        in context: CommandContext
     ) throws -> [XMLChange] {
         guard let existing = values[change.elementID],
               let oldValue = try existing.attribute(for: change.attributeName) else {
             return [] // no reason to fail. Treat like the opposite of an upsert
         }
-        
         
         // Make the change
         values[change.elementID] = try existing.removeAttribute(for: change.attributeName)
@@ -412,18 +464,38 @@ private extension XMLDatabase {
                 XMLAttributeUpsertChange(
                     elementID: change.elementID,
                     attributeName: change.attributeName,
-                    attributeValue: oldValue
+                    attributeValue: { _ in oldValue }
                 )
             )
         return [undoChange]
     }
 
-    func register(_ snapshot: XMLSnapshot) {
+    func register(_ snapshot: XMLPartialSnapshot, in context: CommandContext) {
         for (id, value) in snapshot.values {
-            values[id] = value
+            var newValue = value
+            if case let .element(element) = newValue, let futureID = snapshot.referenceIDs[id] {
+                let newReferenceID = allocateReferenceID(fromTemplate: futureID.template)
+                newValue = .element(element.updateAttribute(newReferenceID, for: "xml:id"))
+                context.register(newReferenceID, forFuture: futureID)
+            }
+            
+            values[id] = newValue
+            if case let .element(element) = newValue, let refID = element.attributes["xml:id"] {
+                referenceIDs.insert(refID)
+            }
         }
     }
 
+    func allocateReferenceID(fromTemplate template: String) -> String {
+        var proposal = template
+        var suffix = 2
+        while referenceIDs.contains(proposal) {
+            proposal = "\(template)\(suffix)"
+            suffix += 1
+        }
+        return proposal
+    }
+    
     func unregister(_ value: XMLValue) -> Set<XMLID> {
         var removed = Set<XMLID>()
         enumerateValues(on: value) { value in
@@ -476,18 +548,18 @@ private extension XMLDatabase {
         }
     }
     
-    func snapshot(from rootID: XMLID) -> XMLSnapshot {
+    func snapshot(from rootID: XMLID) -> XMLPartialSnapshot {
         var snapshotValues = [XMLID: XMLValue]()
         enumerateValues(on: rootID) { value in
             snapshotValues[value.id] = value
         }
-        return XMLSnapshot(roots: [rootID], values: snapshotValues)
+        return XMLPartialSnapshot(roots: [rootID], values: snapshotValues)
     }
     
-    func createContext(forInsertingInto parentID: XMLID?, at index: XMLIndex) -> XMLCreateContext {
+    func createContext(forInsertingInto parentID: XMLID?, at index: XMLIndex, commandContext: CommandContext) -> XMLCreateContext {
         guard let parentID else {
             // Root is a special case
-            return XMLCreateContext(indent: 0, isFirst: false, isLast: false)
+            return XMLCreateContext(indent: 0, isFirst: false, isLast: false, variables: commandContext.variables)
         }
         let createIndent = indent(of: parentID) + 1
         let existingChildValues = element(byID: parentID).map { childValues(for: $0) } ?? []
@@ -495,7 +567,8 @@ private extension XMLDatabase {
         return XMLCreateContext(
             indent: createIndent,
             isFirst: existingChildValues.isEmpty || index == .at(0),
-            isLast: existingChildValues.isEmpty || index == .last || index == .at(existingChildValues.count)
+            isLast: existingChildValues.isEmpty || index == .last || index == .at(existingChildValues.count),
+            variables: commandContext.variables
         )
     }
     

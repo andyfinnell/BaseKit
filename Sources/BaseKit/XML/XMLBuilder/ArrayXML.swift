@@ -6,14 +6,26 @@ public struct ArrayXML<Element: XML>: XML {
         self.elements = elements
     }
     
-    public var attributes: [String: String] {
+    public func attributes(context: XMLBuilderContext) -> [String: String] {
         elements.reduce(into: [String: String]()) { sum, element in
-            sum.merge(element.attributes, uniquingKeysWith: { _, new in new })
+            sum.merge(element.attributes(context: context), uniquingKeysWith: { _, new in new })
         }
     }
     
-    public func values(for parentID: XMLID?, context: XMLBuilderContext, storingInto storage: inout [XMLID: XMLValue]) -> [XMLValue] {
-        elements.flatMap { $0.values(for: parentID, context: context, storingInto: &storage) }
+    public func values(
+        for parentID: XMLID?,
+        context: XMLBuilderContext,
+        storingInto storage: inout [XMLID: XMLValue],
+        registeringReferenceInto references: inout [XMLID: XMLReferenceIDFuture]
+    ) -> [XMLValue] {
+        elements.flatMap {
+            $0.values(
+                for: parentID,
+                context: context,
+                storingInto: &storage,
+                registeringReferenceInto: &references
+            )
+        }
     }
     
     public var body: Never { fatalError() }

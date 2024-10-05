@@ -7,14 +7,24 @@ public struct Element<Content: XML>: XML {
         self.content = content
     }
     
-    public var attributes: [String: String] { [:] }
-    
-    public func values(for parentID: XMLID?, context: XMLBuilderContext, storingInto storage: inout [XMLID: XMLValue]) -> [XMLValue] {
+    public func attributes(context: XMLBuilderContext) -> [String: String] { [:] }
+
+    public func values(
+        for parentID: XMLID?,
+        context: XMLBuilderContext,
+        storingInto storage: inout [XMLID: XMLValue],
+        registeringReferenceInto references: inout [XMLID: XMLReferenceIDFuture]
+    ) -> [XMLValue] {
         let childContent = content()
-        let attrs = childContent.attributes
+        let attrs = childContent.attributes(context: context)
         let id = XMLID()
         let childContext = context.increaseIndent()
-        let childValues = childContent.values(for: id, context: childContext, storingInto: &storage)
+        let childValues = childContent.values(
+            for: id,
+            context: childContext,
+            storingInto: &storage,
+            registeringReferenceInto: &references
+        )
         var allChildValues = [XMLValue]()
         var isIndented = false
         for (i, childValue) in childValues.enumerated() {

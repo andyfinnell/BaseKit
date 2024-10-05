@@ -26,15 +26,14 @@ struct XMLUpdateBuilderTests {
         let rootID = subject.rootValues.first?.id
         
         let addRect = XMLCommand("Add rect") {
-            WithXML(id: rootID!) {
-                InsertXML {
-                    Element("rect") {
-                        Attr("width", "50")
-                        Attr("height", "25")
-                        Attr("fill", "blue")
-                    }
+            InsertXML(into: rootID!) {
+                Element("rect") {
+                    Attr("width", "50")
+                    Attr("height", "25")
+                    Attr("fill", "blue")
                 }
             }
+            
         }
         let (_, _) = try subject.perform(addRect)
         
@@ -56,4 +55,50 @@ struct XMLUpdateBuilderTests {
         #expect(output == expected)
     }
 
+    @Test
+    func testGeneratingReferenceID() throws {
+        let subject = try makeDatabase()
+        let rootID = subject.rootValues.first?.id
+        
+        let addRect = XMLCommand("Add rect") {
+            InsertXML(into: rootID!, at: .at(0)) {
+                Element("defs") {
+                    Element("solidColor") {
+                        GenRefID("insertFill", withTemplate: "rect-fill")
+                        Attr("solid-color", "#F00")
+                    }
+                }
+            }
+            
+            InsertXML(into: rootID!) {
+                Element("rect") {
+                    Attr("width", "50")
+                    Attr("height", "25")
+                    Attr("fill", XMLRefID("insertFill") { "url(#\($0))" })
+                }
+            }
+            
+        }
+        let (_, _) = try subject.perform(addRect)
+        
+        let output = try subject.text()
+        
+        let expected = """
+            <svg height="200" version="1.1" width="300" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <solidColor solid-color="#F00" xml:id="rect-fill" />
+              </defs>
+            
+              <rect fill="red" height="100%" width="100%" />
+            
+              <circle cx="150" cy="100" fill="green" r="80" />
+            
+              <text fill="white" font-size="60" text-anchor="middle" x="150" y="125">SVG</text>
+            
+              <rect fill="url(#rect-fill)" height="25" width="50" />
+            </svg>
+            """
+        
+        #expect(output == expected)
+    }
 }

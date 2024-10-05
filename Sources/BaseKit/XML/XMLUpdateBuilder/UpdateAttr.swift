@@ -1,15 +1,10 @@
-public struct UpdateAttr: XMLUpdate {
+public struct UpdateAttr<V: XMLFormattable & Equatable & Sendable>: XMLUpdate {
     private let name: String
     private let operation: Operation
-    
-    public init(_ name: String, _ value: String, `default` defaultValue: String) {
+        
+    public init(_ name: String, _ value: V, `default` defaultValue: V) {
         self.name = name
         self.operation = value == defaultValue ? .delete : .set(value)
-    }
-    
-    public init<V: XMLFormattable & Equatable>(_ name: String, _ value: V, `default` defaultValue: V) {
-        self.name = name
-        self.operation = value == defaultValue ? .delete : .set(value.xmlFormatted())
     }
         
     public var body: some XMLUpdate {
@@ -25,6 +20,6 @@ public struct UpdateAttr: XMLUpdate {
 private extension UpdateAttr {
     enum Operation {
         case delete
-        case set(String)
+        case set(V)
     }
 }

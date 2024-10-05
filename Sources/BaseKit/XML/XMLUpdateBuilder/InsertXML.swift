@@ -27,7 +27,7 @@ public struct InsertXML<Content: XML>: XMLUpdate {
         let usedParentID = overrideParent.compute(withExisting: parentID)
         return [
             .create(XMLCreateChange(parentID: usedParentID, index: index, factory: { createContext in
-                XMLSnapshot(parentID: usedParentID, createContext: createContext, builder: content)
+                XMLPartialSnapshot(parentID: usedParentID, createContext: createContext, builder: content)
             }))
         ]
     }

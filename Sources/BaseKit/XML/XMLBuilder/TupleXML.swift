@@ -6,18 +6,30 @@ public struct TupleXML<each X: XML>: XML {
         self.xml = xml
     }
     
-    public var attributes: [String: String] {
+    public func attributes(context: XMLBuilderContext) -> [String: String] {
         var allAttributes = [String: String]()
         for child in repeat (each xml) {
-            allAttributes.merge(child.attributes, uniquingKeysWith: { _, new in new })
+            allAttributes.merge(child.attributes(context: context), uniquingKeysWith: { _, new in new })
         }
         return allAttributes
     }
     
-    public func values(for parentID: XMLID?, context: XMLBuilderContext, storingInto storage: inout [XMLID: XMLValue]) -> [XMLValue] {
+    public func values(
+        for parentID: XMLID?,
+        context: XMLBuilderContext,
+        storingInto storage: inout [XMLID: XMLValue],
+        registeringReferenceInto references: inout [XMLID: XMLReferenceIDFuture]
+    ) -> [XMLValue] {
         var allValues = [XMLValue]()
         for child in repeat (each xml) {
-            allValues.append(contentsOf: child.values(for: parentID, context: context, storingInto: &storage))
+            allValues.append(
+                contentsOf: child.values(
+                    for: parentID,
+                    context: context,
+                    storingInto: &storage,
+                    registeringReferenceInto: &references
+                )
+            )
         }
         return allValues
     }

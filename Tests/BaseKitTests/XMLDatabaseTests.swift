@@ -56,7 +56,7 @@ final class XMLDatabaseTests: XCTestCase {
                     XMLCreateChange(parentID: rootID,
                                     index: .last,
                                     factory: { _ in
-                                        XMLSnapshot(
+                                        XMLPartialSnapshot(
                                             XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace1ID, parentID: rootID, text: "  ")),
                                             XMLValue.element(
                                                 XMLElement(
@@ -122,7 +122,7 @@ final class XMLDatabaseTests: XCTestCase {
                         parentID: rootID,
                         index: .at(0),
                         factory: { _ in
-                            XMLSnapshot(
+                            XMLPartialSnapshot(
                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace1ID, parentID: rootID, text: "\n  ")),
                                 XMLValue.element(
                                     XMLElement(
@@ -146,7 +146,7 @@ final class XMLDatabaseTests: XCTestCase {
                                         parentID: defsElement.id,
                                         index: .last,
                                         factory: { _ in
-                                            XMLSnapshot(
+                                            XMLPartialSnapshot(
                                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: colorWhitespace1ID, parentID: defsElement.id, text: "\n    ")),
                                                 XMLValue.element(
                                                     XMLElement(
@@ -243,7 +243,7 @@ final class XMLDatabaseTests: XCTestCase {
                         parentID: rootID,
                         index: .at(0),
                         factory: { _ in
-                            XMLSnapshot(
+                            XMLPartialSnapshot(
                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace1ID, parentID: rootID, text: "\n  ")),
                                 XMLValue.element(
                                     XMLElement(
@@ -267,7 +267,7 @@ final class XMLDatabaseTests: XCTestCase {
                                         parentID: defsElement.id,
                                         index: .last,
                                         factory: { _ in
-                                            XMLSnapshot(
+                                            XMLPartialSnapshot(
                                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: colorWhitespace1ID, parentID: defsElement.id, text: "  ")),
                                                 XMLValue.element(
                                                     XMLElement(
@@ -399,8 +399,8 @@ final class XMLDatabaseTests: XCTestCase {
         let updateCircle = XMLCommand(
             name: "Update position",
             changes: [
-                .upsertAttribute(XMLAttributeUpsertChange(elementID: circle!.id, attributeName: "x", attributeValue: "25")),
-                .upsertAttribute(XMLAttributeUpsertChange(elementID: circle!.id, attributeName: "y", attributeValue: "15")),
+                .upsertAttribute(XMLAttributeUpsertChange(elementID: circle!.id, attributeName: "x", attributeValue: { _ in "25" })),
+                .upsertAttribute(XMLAttributeUpsertChange(elementID: circle!.id, attributeName: "y", attributeValue: { _ in "15" })),
             ]
         )
         let (_, changes) = try subject.perform(updateCircle)
@@ -432,7 +432,7 @@ final class XMLDatabaseTests: XCTestCase {
         let updateText = XMLCommand(
             name: "Update font size",
             changes: [
-                .upsertAttribute(XMLAttributeUpsertChange(elementID: text!.id, attributeName: "font-size", attributeValue: "72"))
+                .upsertAttribute(XMLAttributeUpsertChange(elementID: text!.id, attributeName: "font-size", attributeValue: { _ in "72" }))
             ]
         )
         let (_, changes) = try subject.perform(updateText)

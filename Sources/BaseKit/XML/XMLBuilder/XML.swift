@@ -1,26 +1,37 @@
 public struct XMLBuilderContext {
     public let indent: Int
+    private let variables: [String: String]
     
-    public init(indent: Int = 0) {
+    public init(indent: Int = 0, variables: [String: String]) {
         self.indent = indent
+        self.variables = variables
     }
     
     public func increaseIndent() -> XMLBuilderContext {
-        XMLBuilderContext(indent: indent + 1)
+        XMLBuilderContext(indent: indent + 1, variables: variables)
     }
 
     public func decreaseIndent() -> XMLBuilderContext {
-        XMLBuilderContext(indent: max(0, indent - 1))
+        XMLBuilderContext(indent: max(0, indent - 1), variables: variables)
     }
 
     var indentString: String {
         String(repeating: " ", count: (indent * 2))
     }
+    
+    var asXMLFormatContext: XMLFormatContext {
+        XMLFormatContext(variables: variables)
+    }
 }
 
 public protocol XMLImpl {
-    var attributes: [String: String] { get }
-    func values(for parentID: XMLID?, context: XMLBuilderContext, storingInto storage: inout [XMLID: XMLValue]) -> [XMLValue]
+    func attributes(context: XMLBuilderContext) -> [String: String]
+    func values(
+        for parentID: XMLID?,
+        context: XMLBuilderContext,
+        storingInto storage: inout [XMLID: XMLValue],
+        registeringReferenceInto references: inout [XMLID: XMLReferenceIDFuture]
+    ) -> [XMLValue]
 }
 
 public protocol XML: XMLImpl {
@@ -31,18 +42,33 @@ public protocol XML: XMLImpl {
 }
 
 public extension XML {
-    var attributes: [String: String] {
-        body.attributes
+    func attributes(context: XMLBuilderContext) -> [String: String] {
+        body.attributes(context: context)
     }
     
-    func values(for parentID: XMLID?, context: XMLBuilderContext, storingInto storage: inout [XMLID: XMLValue]) -> [XMLValue] {
-        body.values(for: parentID, context: context, storingInto: &storage)
+    func values(
+        for parentID: XMLID?,
+        context: XMLBuilderContext,
+        storingInto storage: inout [XMLID: XMLValue],
+        registeringReferenceInto references: inout [XMLID: XMLReferenceIDFuture]
+    ) -> [XMLValue] {
+        body.values(
+            for: parentID,
+            context: context,
+            storingInto: &storage,
+            registeringReferenceInto: &references
+        )
     }
 }
 
 extension Never: XML {
-    public var attributes: [String: String] { [:] }
-    public func values(for parentID: XMLID?, context: XMLBuilderContext, storingInto storage: inout [XMLID: XMLValue]) -> [XMLValue] { [] }
+    public func attributes(context: XMLBuilderContext) -> [String: String] { [:] }
+    public func values(
+        for parentID: XMLID?,
+        context: XMLBuilderContext,
+        storingInto storage: inout [XMLID: XMLValue],
+        registeringReferenceInto references: inout [XMLID: XMLReferenceIDFuture]
+    ) -> [XMLValue] { [] }
     
     public var body: Never { fatalError() }
 }

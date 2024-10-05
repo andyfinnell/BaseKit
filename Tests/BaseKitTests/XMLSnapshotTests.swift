@@ -1,11 +1,11 @@
 import Foundation
-import BaseKit
+@testable import BaseKit
 import Testing
 
 struct XMLSnapshotTests {
     @Test
     func builder() throws {
-        let snapshot = XMLSnapshot(parentID: nil, createContext: XMLCreateContext(indent: 0, isFirst: false, isLast: false)) {
+        let snapshot = XMLPartialSnapshot(parentID: nil, createContext: XMLCreateContext(indent: 0, isFirst: false, isLast: false, variables: [:])) {
             Element("svg") {
                 Attr("version", "1.1")
                 Attr("width", "300")
@@ -52,7 +52,8 @@ struct XMLSnapshotTests {
                 }
             }
         }
-        let got = try snapshot.text()
+        let fullSnapshot = XMLSnapshot(roots: snapshot.roots, values: snapshot.values)
+        let got = try fullSnapshot.text()
         let expected = """
             <svg height="200" version="1.1" width="300" xmlns="http://www.w3.org/2000/svg">
               <defs>

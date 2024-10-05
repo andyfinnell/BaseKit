@@ -1,15 +1,10 @@
 public struct SetAttr: XMLUpdate {
     private let name: String
-    private let value: String
-    
-    public init(_ name: String, _ value: String) {
+    private let value: @Sendable (XMLUpdateContext) -> String
+        
+    public init<V: XMLFormattable & Sendable>(_ name: String, _ value: V) {
         self.name = name
-        self.value = value
-    }
-    
-    public init<V: XMLFormattable>(_ name: String, _ value: V) {
-        self.name = name
-        self.value = value.xmlFormatted()
+        self.value = { value.xmlFormatted(using: $0.asXMLFormatContext) }
     }
     
     public func changes(for parentID: XMLID?) -> [XMLChange] {

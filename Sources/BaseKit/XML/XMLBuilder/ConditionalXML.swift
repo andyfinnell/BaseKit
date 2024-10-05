@@ -10,21 +10,26 @@ public struct ConditionalXML<True: XML, False: XML>: XML {
         self.value = value
     }
     
-    public var attributes: [String: String] {
+    public func attributes(context: XMLBuilderContext) -> [String: String] {
         switch value {
         case let .true(value):
-            value.attributes
+            value.attributes(context: context)
         case let .false(value):
-            value.attributes
+            value.attributes(context: context)
         }
     }
     
-    public func values(for parentID: XMLID?, context: XMLBuilderContext, storingInto storage: inout [XMLID: XMLValue]) -> [XMLValue] {
+    public func values(
+        for parentID: XMLID?,
+        context: XMLBuilderContext,
+        storingInto storage: inout [XMLID: XMLValue],
+        registeringReferenceInto references: inout [XMLID: XMLReferenceIDFuture]
+    ) -> [XMLValue] {
         switch value {
         case let .true(value):
-            value.values(for: parentID, context: context, storingInto: &storage)
+            value.values(for: parentID, context: context, storingInto: &storage, registeringReferenceInto: &references)
         case let .false(value):
-            value.values(for: parentID, context: context, storingInto: &storage)
+            value.values(for: parentID, context: context, storingInto: &storage, registeringReferenceInto: &references)
         }
     }
     

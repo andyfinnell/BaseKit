@@ -9,20 +9,22 @@ public struct XMLCreateContext: Sendable {
     public let indent: Int
     public let isFirst: Bool
     public let isLast: Bool
+    let variables: [String: String]
     
-    public init(indent: Int, isFirst: Bool, isLast: Bool) {
+    public init(indent: Int, isFirst: Bool, isLast: Bool, variables: [String: String]) {
         self.indent = indent
         self.isFirst = isFirst
         self.isLast = isLast
+        self.variables = variables
     }
 }
 
 public struct XMLCreateChange: Sendable {
     public let parentID: XMLID? // nil means root
     public let index: XMLIndex
-    public let factory: @Sendable (XMLCreateContext) -> XMLSnapshot
+    public let factory: @Sendable (XMLCreateContext) -> XMLPartialSnapshot
     
-    public init(parentID: XMLID?, index: XMLIndex, factory: @escaping @Sendable (XMLCreateContext) -> XMLSnapshot) {
+    public init(parentID: XMLID?, index: XMLIndex, factory: @escaping @Sendable (XMLCreateContext) -> XMLPartialSnapshot) {
         self.parentID = parentID
         self.index = index
         self.factory = factory
@@ -54,14 +56,14 @@ public enum XMLUpsertQuery: Sendable {
 public struct XMLUpsertChange: Sendable {
     public let parentID: XMLID? // nil means root
     public let index: XMLIndex
-    public let factory: @Sendable (XMLCreateContext) -> XMLSnapshot
+    public let factory: @Sendable (XMLCreateContext) -> XMLPartialSnapshot
     public let existingElementQuery: XMLUpsertQuery
     public let changesFactory: @Sendable (XMLElement) -> [XMLChange]
     
     public init(
         parentID: XMLID?,
         index: XMLIndex,
-        factory: @Sendable @escaping (XMLCreateContext) -> XMLSnapshot,
+        factory: @Sendable @escaping (XMLCreateContext) -> XMLPartialSnapshot,
         existingElementQuery: XMLUpsertQuery,
         changesFactory: @Sendable @escaping (XMLElement) -> [XMLChange]
     ) {
@@ -73,12 +75,28 @@ public struct XMLUpsertChange: Sendable {
     }
 }
 
+public struct XMLUpdateContext: Sendable {
+    private let variables: [String: String]
+    
+    public init(variables: [String : String]) {
+        self.variables = variables
+    }
+    
+    var asXMLFormatContext: XMLFormatContext {
+        XMLFormatContext(variables: variables)
+    }
+}
+
 public struct XMLAttributeUpsertChange: Sendable {
     public let elementID: XMLID
     public let attributeName: String
-    public let attributeValue: String
+    public let attributeValue: @Sendable (XMLUpdateContext) -> String
     
-    public init(elementID: XMLID, attributeName: String, attributeValue: String) {
+    public init(
+        elementID: XMLID,
+        attributeName: String,
+        attributeValue: @escaping @Sendable (XMLUpdateContext) -> String
+    ) {
         self.elementID = elementID
         self.attributeName = attributeName
         self.attributeValue = attributeValue
