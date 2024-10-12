@@ -11,7 +11,7 @@ public final class XMLDatabase {
         
         let refIDs = values.values.compactMap { value in
             if case let .element(element) = value {
-                return element.attributes["xml:id"]
+                return element.attributes["id"]
             } else {
                 return nil
             }
@@ -475,12 +475,12 @@ private extension XMLDatabase {
             var newValue = value
             if case let .element(element) = newValue, let futureID = snapshot.referenceIDs[id] {
                 let newReferenceID = allocateReferenceID(fromTemplate: futureID.template)
-                newValue = .element(element.updateAttribute(newReferenceID, for: "xml:id"))
+                newValue = .element(element.updateAttribute(newReferenceID, for: "id"))
                 context.register(newReferenceID, forFuture: futureID)
             }
             
             values[id] = newValue
-            if case let .element(element) = newValue, let refID = element.attributes["xml:id"] {
+            if case let .element(element) = newValue, let refID = element.attributes["id"] {
                 referenceIDs.insert(refID)
             }
         }

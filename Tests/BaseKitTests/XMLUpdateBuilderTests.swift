@@ -86,7 +86,7 @@ struct XMLUpdateBuilderTests {
         let expected = """
             <svg height="200" version="1.1" width="300" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <solidColor solid-color="#F00" xml:id="rect-fill" />
+                <solidColor id="rect-fill" solid-color="#F00" />
               </defs>
             
               <rect fill="red" height="100%" width="100%" />

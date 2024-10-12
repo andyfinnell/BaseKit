@@ -14,7 +14,7 @@ struct XMLSnapshotTests {
                 
                 Element("defs") {
                     Element("linearGradient") {
-                        Attr("xml:id", "myGradient")
+                        Attr("id", "myGradient")
                         
                         Element("stop") {
                             Attr("stop-offset", "0.0")
@@ -57,7 +57,7 @@ struct XMLSnapshotTests {
         let expected = """
             <svg height="200" version="1.1" width="300" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient xml:id="myGradient">
+                <linearGradient id="myGradient">
                   <stop stop-color="#000" stop-offset="0.0" />
                   <stop stop-color="#FFF" stop-offset="1.0" />
                 </linearGradient>
