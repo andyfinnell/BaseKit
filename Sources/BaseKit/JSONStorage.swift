@@ -10,19 +10,25 @@ public protocol CodableStorage<Value>: Sendable {
 
 public final actor JSONStorage<Value: Codable & Sendable>: CodableStorage {
     private let filename: String
-    private let defaultValue: () -> Value
+    private let defaultValue: (() -> Value)?
     private var listeners = [UUID: AsyncStream<Value>.Continuation]()
     
     public init(filename: String, defaultValue: @escaping () -> Value) {
         self.filename = filename
         self.defaultValue = defaultValue
     }
-    
+
+    public init(filename: String) {
+        self.filename = filename
+        self.defaultValue = nil
+    }
+
     public func makeStream() async -> AsyncStream<Value> {
         let (stream, continuation) = AsyncStream<Value>.makeStream()
         registerListener(continuation)
-        let initialValue = await load()
-        continuation.yield(initialValue)
+        if let initialValue = await load() {
+            continuation.yield(initialValue)
+        }
         return stream
     }
     
@@ -40,7 +46,7 @@ public final actor JSONStorage<Value: Codable & Sendable>: CodableStorage {
 }
 
 private extension JSONStorage {
-    func load() async -> Value {
+    func load() async -> Value? {
         do {
             let url = try storageURL()
             let data = try await Data(asyncContentsOf: url)
@@ -48,7 +54,7 @@ private extension JSONStorage {
             let storage = try decoder.decode(Value.self, from: data)
             return storage
         } catch {
-            return defaultValue()
+            return defaultValue?()
         }
     }
     
