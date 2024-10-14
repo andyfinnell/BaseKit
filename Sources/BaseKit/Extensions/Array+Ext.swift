@@ -21,7 +21,7 @@ public extension Array {
         range.compactMap { at($0) }
     }
 
-    subscript(range: Range<Array.Index>) -> [Element] {
+    func at(_ range: Range<Array.Index>) -> [Element] {
         range.compactMap { at($0) }
     }
 
