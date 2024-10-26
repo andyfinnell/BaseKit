@@ -63,6 +63,10 @@ public extension Array {
             toIndex = count - 1
         }
         
+        reorder(from: fromIndex, to: toIndex)
+    }
+
+    mutating func reorder(from fromIndex: Int, to toIndex: Int) {
         let value = remove(at: fromIndex)
         if toIndex >= fromIndex {
             insert(value, at: toIndex - 1)
@@ -70,7 +74,7 @@ public extension Array {
             insert(value, at: toIndex)
         }
     }
-    
+
     mutating func insert(contentsOf elements: [Element], at index: XMLIndex) {
         switch index {
         case let .at(i):
