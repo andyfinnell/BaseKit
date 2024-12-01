@@ -8,4 +8,6 @@ public enum XMLError: Error {
     case notAnElement
     case indexOutOfBounds
     case upsertFailedToCreateElement
+    case commandStreamAlreadyOpen
+    case noOpenCommandStream
 }

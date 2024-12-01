@@ -4,6 +4,7 @@ public final class XMLDatabase {
     private var roots = [XMLID]()
     private var values = [XMLID: XMLValue]()
     private var referenceIDs: Set<String>
+    private var commandStream: OpenCommand?
     
     init(roots: [XMLID], values: [XMLID: XMLValue]) {
         self.roots = roots
@@ -60,30 +61,147 @@ public final class XMLDatabase {
     public func perform(
         _ command: XMLCommand
     ) throws -> (undo: XMLCommand, changes: Set<XMLDatabaseChange>) {
-        var undoLog = [XMLChange]()
-        do {
-            var changedObjectIDs = Set<XMLDatabaseChange>()
-            let commandContext = CommandContext()
-            for change in command.changes {
-                let undoChanges = try perform(
-                    change,
-                    impacting: &changedObjectIDs,
-                    in: commandContext
-                )
-                undoLog.append(contentsOf: undoChanges)
-            }
-            
-            let undoCommand = XMLCommand(name: command.name, changes: undoLog)
-            return (undo: undoCommand, changes: changedObjectIDs)
-        } catch {
-            print("XMLDatabase.perform FAILURE")
-            rollback(undoLog)
-            throw XMLError.commandFailed(command.name, error)
+        guard commandStream == nil else {
+            throw XMLError.commandStreamAlreadyOpen
         }
+
+        var undoLog = [XMLChange]()
+        let changedObjectIDs = try perform(command, undoLog: &undoLog)
+        let undoCommand = XMLCommand(name: command.name, changes: undoLog)
+        return (undo: undoCommand, changes: changedObjectIDs)
+    }
+    
+    public func beginCommandStream(withName name: String) throws {
+        guard commandStream == nil else {
+            throw XMLError.commandStreamAlreadyOpen
+        }
+        commandStream = OpenCommand(name: name)
+    }
+    
+    public func updateCommandStream(with command: XMLCommand) throws -> Set<XMLDatabaseChange> {
+        guard let commandStream else {
+            throw XMLError.noOpenCommandStream
+        }
+        
+        var undoLog = [XMLChange]()
+        let changedObjectIDs = try perform(command, undoLog: &undoLog)
+        commandStream.append(undoLog)
+        
+        return changedObjectIDs
+    }
+    
+    public func completeCommandStream() throws -> XMLCommand {
+        guard let commandStream else {
+            throw XMLError.noOpenCommandStream
+        }
+
+        let undoCommand = XMLCommand(
+            name: commandStream.name,
+            changes: commandStream.undoLog
+        )
+        
+        self.commandStream = nil
+        
+        return undoCommand
+    }
+    
+    public func cancelCommandStream() throws -> Set<XMLDatabaseChange> {
+        guard let commandStream else {
+            throw XMLError.noOpenCommandStream
+        }
+
+        // Rollback the changes
+        let changes = rollback(commandStream.undoLog)
+        
+        self.commandStream = nil
+        
+        return changes
     }
 }
 
 private extension XMLDatabase {
+    final class OpenCommand {
+        let name: String
+        private(set) var undoLog = [XMLChange]()
+        
+        init(name: String) {
+            self.name = name
+        }
+        
+        func append(_ changes: [XMLChange]) {
+            // This will be played back from first to last.
+            let necessaryChanges = changes.filter { isNecessaryChange($0) }
+            undoLog.prepend(contentsOf: necessaryChanges)
+        }
+        
+        private func isNecessaryChange(_ change: XMLChange) -> Bool {
+            switch change {
+            case .create:
+                return true
+            case .destroy:
+                return true
+            case let .update(update):
+                let isRedundant = undoLog.contains { existing in
+                    // If something after us will overwrite or destroy
+                    if case let .update(existingUpdate) = existing,
+                       existingUpdate.valueID == update.valueID {
+                        return true
+                    } else if case let .destroy(destroy) = existing,
+                              destroy.id == update.valueID {
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+                return !isRedundant
+                
+            case .upsert:
+                return true
+            case let .upsertAttribute(upsert):
+                let isRedundant = undoLog.contains { existing in
+                    // If something after us will overwrite or destroy
+                    if case let .upsertAttribute(existingUpsert) = existing,
+                       existingUpsert.elementID == upsert.elementID,
+                       existingUpsert.attributeName == upsert.attributeName {
+                        return true
+                    } else if case let .destroyAttribute(destroy) = existing,
+                              destroy.elementID == upsert.elementID,
+                              destroy.attributeName == upsert.attributeName {
+                        return true
+                    } else if case let .destroy(destroy) = existing,
+                              destroy.id == upsert.elementID {
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+                return !isRedundant
+                
+            case let .destroyAttribute(destroyAttr):
+                let isRedundant = undoLog.contains { existing in
+                    // If something after us will overwrite or destroy
+                    if case let .upsertAttribute(existingUpsert) = existing,
+                       existingUpsert.elementID == destroyAttr.elementID,
+                       existingUpsert.attributeName == destroyAttr.attributeName {
+                        return true
+                    } else if case let .destroyAttribute(destroy) = existing,
+                              destroy.elementID == destroyAttr.elementID,
+                              destroy.attributeName == destroyAttr.attributeName {
+                        return true
+                    } else if case let .destroy(destroy) = existing,
+                              destroy.id == destroyAttr.elementID {
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+                return !isRedundant
+            case .reorder:
+                return true // unfortunately can't match this with anything else
+            }
+        }
+    }
+    
     final class CommandContext {
         private var referenceIDs = [String: String]()
         
@@ -168,7 +286,7 @@ private extension XMLDatabase {
         }
     }
         
-    func rollback(_ undoChanges: [XMLChange])  {
+    func rollback(_ undoChanges: [XMLChange]) -> Set<XMLDatabaseChange> {
         // Best effort rollback
         var changedIDs = Set<XMLDatabaseChange>()
         let context = CommandContext()
@@ -179,8 +297,33 @@ private extension XMLDatabase {
                 // eat it
             }
         }
+        return changedIDs
     }
     
+    func perform(
+        _ command: XMLCommand,
+        undoLog: inout [XMLChange]
+    ) throws -> Set<XMLDatabaseChange> {
+        do {
+            var changedObjectIDs = Set<XMLDatabaseChange>()
+            let commandContext = CommandContext()
+            for change in command.changes {
+                let undoChanges = try perform(
+                    change,
+                    impacting: &changedObjectIDs,
+                    in: commandContext
+                )
+                undoLog.append(contentsOf: undoChanges)
+            }
+            
+            return changedObjectIDs
+        } catch {
+            print("XMLDatabase.perform FAILURE")
+            _ = rollback(undoLog)
+            throw XMLError.commandFailed(command.name, error)
+        }
+    }
+
     func perform(
         _ change: XMLChange,
         impacting changedObjectIDs: inout Set<XMLDatabaseChange>,
