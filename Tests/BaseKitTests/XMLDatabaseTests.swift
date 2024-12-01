@@ -97,10 +97,10 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.value(rootID!),
-            XMLDatabaseChange.value(whitespace1ID),
-            XMLDatabaseChange.value(elementID),
-            XMLDatabaseChange.value(whitespace2ID),
+            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
+            XMLDatabaseChange.create(elementID, .element("rect")),
+            XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
@@ -195,13 +195,14 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.value(rootID!),
-            XMLDatabaseChange.value(whitespace1ID),
-            XMLDatabaseChange.value(elementID),
-            XMLDatabaseChange.value(whitespace2ID),
-            XMLDatabaseChange.value(colorWhitespace1ID),
-            XMLDatabaseChange.value(colorID),
-            XMLDatabaseChange.value(colorWhitespace2ID),
+            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
+            XMLDatabaseChange.create(elementID, .element("defs")),
+            XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
+            XMLDatabaseChange.update(elementID, .element("defs")),
+            XMLDatabaseChange.create(colorWhitespace1ID, .ignorableWhitespace),
+            XMLDatabaseChange.create(colorID, .element("solidColor")),
+            XMLDatabaseChange.create(colorWhitespace2ID, .ignorableWhitespace),
             
         ])
         XCTAssertEqual(changes, expectedIDs)
@@ -316,10 +317,10 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.value(defsID),
-            XMLDatabaseChange.value(colorWhitespace1ID),
-            XMLDatabaseChange.value(colorID),
-            XMLDatabaseChange.value(colorWhitespace2ID),
+            XMLDatabaseChange.update(defsID, .element("defs")),
+            XMLDatabaseChange.create(colorWhitespace1ID, .ignorableWhitespace),
+            XMLDatabaseChange.create(colorID, .element("solidColor")),
+            XMLDatabaseChange.create(colorWhitespace2ID, .ignorableWhitespace),
             
         ])
         XCTAssertEqual(changes, expectedIDs)
@@ -355,9 +356,9 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.value(rootID!),
-            XMLDatabaseChange.value(text!.id),
-            XMLDatabaseChange.value(textText!.id),
+            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.destroy(text!.id, .element("text")),
+            XMLDatabaseChange.destroy(textText!.id, .text),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
@@ -389,7 +390,7 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.value(textText!.id),
+            XMLDatabaseChange.update(textText!.id, .text),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
@@ -422,7 +423,7 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.value(circle!.id),
+            XMLDatabaseChange.update(circle!.id, .element("circle")),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
@@ -454,7 +455,7 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.value(text!.id),
+            XMLDatabaseChange.update(text!.id, .element("text")),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
@@ -486,7 +487,7 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.value(text!.id),
+            XMLDatabaseChange.update(text!.id, .element("text")),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
@@ -519,7 +520,7 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.value(svg!.id),
+            XMLDatabaseChange.update(svg!.id, .element("svg")),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
@@ -608,10 +609,10 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output1, expected1)
         let expectedIDs1 = Set([
-            XMLDatabaseChange.value(rootID!),
-            XMLDatabaseChange.value(whitespace1ID),
-            XMLDatabaseChange.value(elementID),
-            XMLDatabaseChange.value(whitespace2ID),
+            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
+            XMLDatabaseChange.create(elementID, .element("rect")),
+            XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
         ])
         XCTAssertEqual(changes1, expectedIDs1)
 
@@ -645,7 +646,7 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output2, expected2)
         let expectedIDs2 = Set([
-            XMLDatabaseChange.value(elementID),
+            XMLDatabaseChange.update(elementID, .element("rect")),
         ])
         XCTAssertEqual(changes2, expectedIDs2)
 
@@ -679,7 +680,7 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output3, expected3)
         let expectedIDs3 = Set([
-            XMLDatabaseChange.value(elementID),
+            XMLDatabaseChange.update(elementID, .element("rect")),
         ])
         XCTAssertEqual(changes3, expectedIDs3)
 
@@ -762,10 +763,10 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output1, expected1)
         let expectedIDs1 = Set([
-            XMLDatabaseChange.value(rootID!),
-            XMLDatabaseChange.value(whitespace1ID),
-            XMLDatabaseChange.value(elementID),
-            XMLDatabaseChange.value(whitespace2ID),
+            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
+            XMLDatabaseChange.create(elementID, .element("rect")),
+            XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
         ])
         XCTAssertEqual(changes1, expectedIDs1)
 
@@ -799,7 +800,7 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output2, expected2)
         let expectedIDs2 = Set([
-            XMLDatabaseChange.value(elementID),
+            XMLDatabaseChange.update(elementID, .element("rect")),
         ])
         XCTAssertEqual(changes2, expectedIDs2)
 
@@ -833,16 +834,16 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output3, expected3)
         let expectedIDs3 = Set([
-            XMLDatabaseChange.value(elementID),
+            XMLDatabaseChange.update(elementID, .element("rect")),
         ])
         XCTAssertEqual(changes3, expectedIDs3)
 
         let changes4 = try subject.cancelCommandStream()
         let expectedIDs4 = Set([
-            XMLDatabaseChange.value(rootID!),
-            XMLDatabaseChange.value(whitespace1ID),
-            XMLDatabaseChange.value(elementID),
-            XMLDatabaseChange.value(whitespace2ID),
+            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.destroy(whitespace1ID, .ignorableWhitespace),
+            XMLDatabaseChange.destroy(elementID, .element("rect")),
+            XMLDatabaseChange.destroy(whitespace2ID, .ignorableWhitespace),
         ])
         XCTAssertEqual(changes4, expectedIDs4)
         

@@ -365,11 +365,11 @@ private extension XMLDatabase {
         try insert(new.roots, into: change.parentID, at: change.index)
         
         // Make note what changed
-        changedObjectIDs.formUnion(new.values.keys.map { .value($0) })
+        changedObjectIDs.formUnion(new.values.keys.map { create($0) })
         if let parentID = change.parentID {
-            changedObjectIDs.insert(.value(parentID))
+            changedObjectIDs.insert(update(parentID))
         } else {
-            changedObjectIDs.insert(.root)
+            changedObjectIDs.insert(.updateRoot)
         }
         
         // Create the reverse change
@@ -398,11 +398,11 @@ private extension XMLDatabase {
         let removedIDs = unregister(old)
 
         // Make note what changed
-        changedObjectIDs.formUnion(removedIDs.map { .value($0) })
+        changedObjectIDs.formUnion(removedIDs)
         if let parentID = old.parentID {
-            changedObjectIDs.insert(.value(parentID))
+            changedObjectIDs.insert(update(parentID))
         } else {
-            changedObjectIDs.insert(.root)
+            changedObjectIDs.insert(.updateRoot)
         }
 
         // Create the undo
@@ -432,7 +432,7 @@ private extension XMLDatabase {
         values[change.valueID] = try existing.updateContent(change.content)
         
         // Make note of what changed
-        changedObjectIDs.insert(.value(change.valueID))
+        changedObjectIDs.insert(update(change.valueID))
         
         // Create the undo record
         let undoChange = XMLChange.update(
@@ -458,7 +458,7 @@ private extension XMLDatabase {
             values[parentID] = try parent.reorderChild(from: change.fromIndex, to: change.toIndex)
             
             // Make note of what changed
-            changedObjectIDs.insert(.value(parentID))
+            changedObjectIDs.insert(update(parentID))
         } else {
             // We're changing the root
             
@@ -466,7 +466,7 @@ private extension XMLDatabase {
             roots.reorder(from: change.fromIndex, to: change.toIndex)
             
             // Make note of what changed
-            changedObjectIDs.insert(.root)
+            changedObjectIDs.insert(.updateRoot)
         }
         
         // Create the undo record
@@ -563,7 +563,7 @@ private extension XMLDatabase {
         )
         
         // Make note of what changed
-        changedObjectIDs.insert(.value(change.elementID))
+        changedObjectIDs.insert(update(change.elementID))
         
         // Create the undo record
         let undoChange: XMLChange
@@ -600,7 +600,7 @@ private extension XMLDatabase {
         values[change.elementID] = try existing.removeAttribute(for: change.attributeName)
         
         // Make note of what changed
-        changedObjectIDs.insert(.value(change.elementID))
+        changedObjectIDs.insert(update(change.elementID))
         
         // Create the undo record
         let undoChange = XMLChange.upsertAttribute(
@@ -613,6 +613,29 @@ private extension XMLDatabase {
         return [undoChange]
     }
 
+    func create(_ id: XMLID) -> XMLDatabaseChange {
+        XMLDatabaseChange.create(id, changeSubjectKind(id))
+    }
+
+    func update(_ id: XMLID) -> XMLDatabaseChange {
+        XMLDatabaseChange.update(id, changeSubjectKind(id))
+    }
+
+    func destroy(_ id: XMLID) -> XMLDatabaseChange {
+        XMLDatabaseChange.destroy(id, changeSubjectKind(id))
+    }
+
+    func changeSubjectKind(_ id: XMLID) -> XMLDatabaseChangeSubjectKind {
+        switch values[id] {
+        case let .element(element): .element(element.name)
+        case .text: .text
+        case .cdata: .cdata
+        case .comment: .comment
+        case .ignorableWhitespace: .ignorableWhitespace
+        case .none: .root
+        }
+    }
+    
     func register(_ snapshot: XMLPartialSnapshot, in context: CommandContext) {
         for (id, value) in snapshot.values {
             var newValue = value
@@ -639,15 +662,18 @@ private extension XMLDatabase {
         return proposal
     }
     
-    func unregister(_ value: XMLValue) -> Set<XMLID> {
-        var removed = Set<XMLID>()
+    func unregister(_ value: XMLValue) -> Set<XMLDatabaseChange> {
+        var removed = Set<XMLDatabaseChange>()
         enumerateValues(on: value) { value in
             // Don't modifiy self while walking the hierarchy
-            removed.insert(value.id)
+            removed.insert(destroy(value.id))
         }
         
         for removedID in removed {
-            values.removeValue(forKey: removedID)
+            guard case let .value(id) = removedID.id else {
+                continue
+            }
+            values.removeValue(forKey: id)
         }
         
         return removed
