@@ -28,4 +28,7 @@ public struct XMLUpdateBuilder {
         ConditionalXMLUpdate(.false(component))
     }
 
+    public static func buildArray<X: XMLUpdate>(_ components: [X]) -> ArrayXMLUpdate<X> {
+        ArrayXMLUpdate(components)
+    }
 }
