@@ -555,6 +555,100 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
     
+    func testOrderedUndo() throws {
+        let rootID = subject.rootValues.first?.id
+        let whitespace1ID = XMLID()
+        let elementID = XMLID()
+        let whitespace2ID = XMLID()
+        
+        let addRect = XMLCommand(
+            name: "Add rect",
+            changes: [
+                .create(
+                    XMLCreateChange(parentID: rootID,
+                                    index: .last,
+                                    factory: { _ in
+                                        XMLPartialSnapshot(
+                                            XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace1ID, parentID: rootID, text: "  ")),
+                                            XMLValue.element(
+                                                XMLElement(
+                                                    id: elementID,
+                                                    parentID: rootID,
+                                                    name: "rect",
+                                                    namespaceURI: nil,
+                                                    qualifiedName: nil,
+                                                    attributes: ["width": "50", "height": "25", "fill": "blue"],
+                                                    children: []
+                                                )
+                                            ),
+                                            XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace2ID, parentID: rootID, text: "\n\n"))
+                                        )
+                                    }
+                                   )
+                ),
+                .upsertAttribute(
+                    XMLAttributeUpsertChange(
+                        elementID: elementID,
+                        attributeName: "rx",
+                        attributeValue: { _ in "4"
+                        })
+                )
+            ]
+        )
+        let (undoCommand, changesAfterAdd) = try subject.perform(addRect)
+        
+        let outputAfterAdd = try subject.text()
+        
+        let expectedAfterAdd = """
+            <svg height="200" version="1.1" width="300" xmlns="http://www.w3.org/2000/svg">
+            
+              <rect fill="red" height="100%" width="100%" />
+            
+              <circle cx="150" cy="100" fill="green" r="80" />
+            
+              <text fill="white" font-size="60" text-anchor="middle" x="150" y="125">SVG</text>
+            
+              <rect fill="blue" height="25" rx="4" width="50" />
+            
+            </svg>
+            """
+        
+        XCTAssertEqual(outputAfterAdd, expectedAfterAdd)
+        
+        let expectedIDsAfterAdd = Set([
+            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
+            XMLDatabaseChange.create(elementID, .element("rect")),
+            XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
+            XMLDatabaseChange.update(elementID, .element("rect"))
+        ])
+        XCTAssertEqual(changesAfterAdd, expectedIDsAfterAdd)
+
+        
+        let (redoCommand, _) = try subject.perform(undoCommand)
+        
+        let outputAfterUndo = try subject.text()
+        
+        let expectedAfterUndo = """
+            <svg height="200" version="1.1" width="300" xmlns="http://www.w3.org/2000/svg">
+            
+              <rect fill="red" height="100%" width="100%" />
+            
+              <circle cx="150" cy="100" fill="green" r="80" />
+            
+              <text fill="white" font-size="60" text-anchor="middle" x="150" y="125">SVG</text>
+            
+            </svg>
+            """
+        
+        XCTAssertEqual(outputAfterUndo, expectedAfterUndo)
+        
+        _ = try subject.perform(redoCommand)
+        
+        let outputAfterRedo = try subject.text()
+        XCTAssertEqual(outputAfterRedo, expectedAfterAdd)
+    }
+
     func testCommandStreamComplete() throws {
         let whitespace1ID = XMLID()
         let elementID = XMLID()

@@ -313,7 +313,7 @@ private extension XMLDatabase {
                     impacting: &changedObjectIDs,
                     in: commandContext
                 )
-                undoLog.append(contentsOf: undoChanges)
+                undoLog.insert(contentsOf: undoChanges, at: 0)
             }
             
             return changedObjectIDs
