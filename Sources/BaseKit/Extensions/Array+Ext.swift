@@ -13,11 +13,11 @@ public extension Array {
         return f
     }
     
-    subscript(indexSet: IndexSet) -> [Element] {
+    func at(_ indexSet: IndexSet) -> [Element] {
         indexSet.compactMap { at($0) }
     }
     
-    subscript(range: ClosedRange<Array.Index>) -> [Element] {
+    func at(_ range: ClosedRange<Array.Index>) -> [Element] {
         range.compactMap { at($0) }
     }
 

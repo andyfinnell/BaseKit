@@ -34,7 +34,7 @@ struct ArrayTests {
     func testSubscriptIndexSet() {
         let subject = [1, 2, 3, 4, 5]
         let indexSet = IndexSet([0, 2, 4, 6, 8, 10])
-        #expect(subject[indexSet] == [1, 3, 5])
+        #expect(subject.at(indexSet) == [1, 3, 5])
     }
     
     @Test
