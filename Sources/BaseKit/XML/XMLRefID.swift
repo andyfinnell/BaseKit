@@ -1,8 +1,8 @@
-public struct XMLRefID: XMLFormattable {
+public struct XMLRefID: XMLFormattable, Sendable {
     private let name: String
-    private let transform: (String) -> String
+    private let transform: @Sendable (String) -> String
     
-    public init(_ name: String, transform: @escaping (String) -> String = { $0 }) {
+    public init(_ name: String, transform: @escaping @Sendable (String) -> String = { $0 }) {
         self.name = name
         self.transform = transform
     }
