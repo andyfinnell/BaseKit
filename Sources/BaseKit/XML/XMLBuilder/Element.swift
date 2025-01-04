@@ -1,8 +1,10 @@
 public struct Element<Content: XML>: XML {
+    private let idOverride: XMLID?
     private let name: String
     private let content: () -> Content
     
-    public init(_ name: String, @XMLSnapshotBuilder content: @escaping () -> Content) {
+    public init(_ name: String, id idOverride: XMLID? = nil, @XMLSnapshotBuilder content: @escaping () -> Content) {
+        self.idOverride = idOverride
         self.name = name
         self.content = content
     }
@@ -17,7 +19,7 @@ public struct Element<Content: XML>: XML {
     ) -> [XMLValue] {
         let childContent = content()
         let attrs = childContent.attributes(context: context)
-        let id = XMLID()
+        let id = idOverride ?? XMLID()
         let childContext = context.increaseIndent()
         let childValues = childContent.values(
             for: id,
