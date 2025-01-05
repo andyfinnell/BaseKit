@@ -1,19 +1,29 @@
 import Foundation
-import XCTest
+import Testing
 import BaseKit
 
-final class CollectionTests: XCTestCase {
+struct CollectionTests {
+    @Test
     func testOnly() {
-        XCTAssertNil([Int]().only)
-        XCTAssertNil([1, 2].only)
-        XCTAssertEqual([1].only, 1)
+        #expect([Int]().only == nil)
+        #expect([1, 2].only == nil)
+        #expect([1].only == 1)
     }
     
+    @Test
     func testPrependContents() {
         var subject = [1, 2]
         
         subject.prepend(contentsOf: [3, 4])
         
-        XCTAssertEqual(subject, [3, 4, 1, 2])
+        #expect(subject == [3, 4, 1, 2])
+    }
+    
+    @Test
+    func testAllEqual() {
+        #expect([Int]().allEqual() == true)
+        #expect([1].allEqual() == true)
+        #expect([1, 1].allEqual() == true)
+        #expect([1, 2].allEqual() == false)
     }
 }

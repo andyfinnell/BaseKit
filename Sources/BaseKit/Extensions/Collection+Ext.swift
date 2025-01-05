@@ -12,3 +12,12 @@ public extension RangeReplaceableCollection {
         insert(contentsOf: newElements, at: startIndex)
     }
 }
+
+public extension Collection where Element: Equatable {
+    func allEqual() -> Bool {
+        guard let first, count > 1 else {
+            return true // if no elements, or just 1 then must be equal
+        }
+        return !contains(where: { $0 != first })
+    }
+}
