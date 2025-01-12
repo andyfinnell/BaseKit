@@ -1,8 +1,8 @@
 public struct SetAttr: XMLUpdate {
-    private let name: String
+    private let name: XMLAttribute
     private let value: @Sendable (XMLUpdateContext) -> String
         
-    public init<V: XMLFormattable & Sendable>(_ name: String, _ value: V) {
+    public init<V: XMLFormattable & Sendable>(_ name: XMLAttribute, _ value: V) {
         self.name = name
         self.value = { value.xmlFormatted(using: $0.asXMLFormatContext) }
     }

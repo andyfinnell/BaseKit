@@ -1,13 +1,13 @@
 public struct UpdateAttr<V: XMLFormattable & Equatable & Sendable>: XMLUpdate {
-    private let name: String
+    private let name: XMLAttribute
     private let operation: Operation
         
-    public init(_ name: String, _ value: V, `default` defaultValue: V) {
+    public init(_ name: XMLAttribute, _ value: V, `default` defaultValue: V) {
         self.name = name
         self.operation = value == defaultValue ? .delete : .set(value)
     }
     
-    public init(_ name: String, _ value: V?) {
+    public init(_ name: XMLAttribute, _ value: V?) {
         self.name = name
         self.operation = value.map { .set($0) } ?? .delete
     }

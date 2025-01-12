@@ -1,15 +1,15 @@
 public struct Element<Content: XML>: XML {
     private let idOverride: XMLID?
-    private let name: String
+    private let name: XMLName
     private let content: () -> Content
     
-    public init(_ name: String, id idOverride: XMLID? = nil, @XMLSnapshotBuilder content: @escaping () -> Content) {
+    public init(_ name: XMLName, id idOverride: XMLID? = nil, @XMLSnapshotBuilder content: @escaping () -> Content) {
         self.idOverride = idOverride
         self.name = name
         self.content = content
     }
     
-    public func attributes(context: XMLBuilderContext) -> [String: String] { [:] }
+    public func attributes(context: XMLBuilderContext) -> [XMLAttribute: String] { [:] }
 
     public func values(
         for parentID: XMLID?,

@@ -38,7 +38,7 @@ public enum XMLDatabaseChangeAction: Hashable, Sendable {
 
 public enum XMLDatabaseChangeSubjectKind: Hashable, Sendable {
     case root
-    case element(String)
+    case element(XMLName)
     case text
     case cdata
     case comment

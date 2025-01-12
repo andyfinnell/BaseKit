@@ -6,13 +6,21 @@ public typealias XMLID = Identifier<UUID, XMLIDType>
 public struct XMLElement: Hashable, Identifiable, Sendable {
     public let id: XMLID
     public let parentID: XMLID?
-    public let name: String
+    public let name: XMLName
     public let namespaceURI: String?
     public let qualifiedName: String?
-    public let attributes: [String: String]
+    public let attributes: [XMLAttribute: String]
     public let children: [XMLID]
     
-    public init(id: XMLID, parentID: XMLID?, name: String, namespaceURI: String?, qualifiedName: String?, attributes: [String : String], children: [XMLID]) {
+    public init(
+        id: XMLID,
+        parentID: XMLID?,
+        name: XMLName,
+        namespaceURI: String?,
+        qualifiedName: String?,
+        attributes: [XMLAttribute : String],
+        children: [XMLID]
+    ) {
         self.id = id
         self.parentID = parentID
         self.name = name
@@ -77,11 +85,11 @@ public struct XMLElement: Hashable, Identifiable, Sendable {
         return (updatedElement, .at(removedIndex))
     }
     
-    func attribute(for name: String) -> String? {
+    func attribute(for name: XMLAttribute) -> String? {
         attributes[name]
     }
     
-    func updateAttribute(_ value: String, for attributeName: String) -> XMLElement {
+    func updateAttribute(_ value: String, for attributeName: XMLAttribute) -> XMLElement {
         var changedAttributes = attributes
         changedAttributes[attributeName] = value
         return XMLElement(
@@ -95,7 +103,7 @@ public struct XMLElement: Hashable, Identifiable, Sendable {
         )
     }
     
-    func removeAttribute(for attributeName: String) -> XMLElement {
+    func removeAttribute(for attributeName: XMLAttribute) -> XMLElement {
         var changedAttributes = attributes
         changedAttributes.removeValue(forKey: attributeName)
         return XMLElement(
@@ -268,7 +276,7 @@ public enum XMLValue: Hashable, Identifiable, Sendable {
         }
     }
     
-    func attribute(for name: String) throws -> String? {
+    func attribute(for name: XMLAttribute) throws -> String? {
         switch self {
         case let .element(element):
             return element.attribute(for: name)
@@ -277,7 +285,7 @@ public enum XMLValue: Hashable, Identifiable, Sendable {
         }
     }
     
-    func updateAttribute(_ value: String, for attributeName: String) throws -> XMLValue {
+    func updateAttribute(_ value: String, for attributeName: XMLAttribute) throws -> XMLValue {
         switch self {
         case let .element(element):
             return .element(element.updateAttribute(value, for: attributeName))
@@ -286,7 +294,7 @@ public enum XMLValue: Hashable, Identifiable, Sendable {
         }
     }
     
-    func removeAttribute(for attributeName: String) throws -> XMLValue {
+    func removeAttribute(for attributeName: XMLAttribute) throws -> XMLValue {
         switch self {
         case let .element(element):
             return .element(element.removeAttribute(for: attributeName))

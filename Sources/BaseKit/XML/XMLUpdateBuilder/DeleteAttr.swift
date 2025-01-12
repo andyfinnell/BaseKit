@@ -1,7 +1,7 @@
 public struct DeleteAttr: XMLUpdate {
-    private let name: String
+    private let name: XMLAttribute
     
-    public init(_ name: String) {
+    public init(_ name: XMLAttribute) {
         self.name = name
     }
         

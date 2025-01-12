@@ -5,7 +5,7 @@ public struct Text: XML {
         self.value = value
     }
     
-    public func attributes(context: XMLBuilderContext) -> [String: String] { [:] }
+    public func attributes(context: XMLBuilderContext) -> [XMLAttribute: String] { [:] }
     public func values(
         for parentID: XMLID?,
         context: XMLBuilderContext,

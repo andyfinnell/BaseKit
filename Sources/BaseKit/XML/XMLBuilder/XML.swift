@@ -25,7 +25,7 @@ public struct XMLBuilderContext {
 }
 
 public protocol XMLImpl {
-    func attributes(context: XMLBuilderContext) -> [String: String]
+    func attributes(context: XMLBuilderContext) -> [XMLAttribute: String]
     func values(
         for parentID: XMLID?,
         context: XMLBuilderContext,
@@ -42,7 +42,7 @@ public protocol XML: XMLImpl {
 }
 
 public extension XML {
-    func attributes(context: XMLBuilderContext) -> [String: String] {
+    func attributes(context: XMLBuilderContext) -> [XMLAttribute: String] {
         body.attributes(context: context)
     }
     
@@ -62,7 +62,7 @@ public extension XML {
 }
 
 extension Never: XML {
-    public func attributes(context: XMLBuilderContext) -> [String: String] { [:] }
+    public func attributes(context: XMLBuilderContext) -> [XMLAttribute: String] { [:] }
     public func values(
         for parentID: XMLID?,
         context: XMLBuilderContext,

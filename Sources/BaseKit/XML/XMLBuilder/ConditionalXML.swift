@@ -10,7 +10,7 @@ public struct ConditionalXML<True: XML, False: XML>: XML {
         self.value = value
     }
     
-    public func attributes(context: XMLBuilderContext) -> [String: String] {
+    public func attributes(context: XMLBuilderContext) -> [XMLAttribute: String] {
         switch value {
         case let .true(value):
             value.attributes(context: context)

@@ -6,8 +6,8 @@ public struct ArrayXML<Element: XML>: XML {
         self.elements = elements
     }
     
-    public func attributes(context: XMLBuilderContext) -> [String: String] {
-        elements.reduce(into: [String: String]()) { sum, element in
+    public func attributes(context: XMLBuilderContext) -> [XMLAttribute: String] {
+        elements.reduce(into: [XMLAttribute: String]()) { sum, element in
             sum.merge(element.attributes(context: context), uniquingKeysWith: { _, new in new })
         }
     }

@@ -1,6 +1,6 @@
 
 public enum XMLPathKind {
-    case element(String)
+    case element(XMLName)
     case text
     case whitespace
     case cdata
@@ -24,11 +24,11 @@ public struct XMLPath {
         self.segments = segments
     }
         
-    public static func element(_ name: String, at index: Int = 0) -> XMLPath {
+    public static func element(_ name: XMLName, at index: Int = 0) -> XMLPath {
         root(kind: .element(name), index: index)
     }
     
-    public func element(_ name: String, at index: Int = 0) -> XMLPath {
+    public func element(_ name: XMLName, at index: Int = 0) -> XMLPath {
         appending(kind: .element(name), index: index)
     }
 

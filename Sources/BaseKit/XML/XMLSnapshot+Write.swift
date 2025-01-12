@@ -65,7 +65,7 @@ private extension XMLDatabaseWriter {
     }
     
     func write(_ element: XMLElement) throws {
-        write("<\(element.qualifiedName ?? element.name)")
+        write("<\(element.qualifiedName ?? element.name.rawValue)")
         let attributeKeys = element.attributes.keys.sorted()
         for key in attributeKeys {
             guard let value = element.attributes[key] else {
@@ -85,7 +85,7 @@ private extension XMLDatabaseWriter {
                 try write(childID)
             }
             
-            write("</\(element.qualifiedName ?? element.name)>")
+            write("</\(element.qualifiedName ?? element.name.rawValue)>")
         }
     }
     

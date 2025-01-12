@@ -59,10 +59,13 @@ extension XMLReaderData: XMLParserDelegate {
         let element = XMLElement(
             id: XMLID(),
             parentID: parentID,
-            name: elementName,
+            name: XMLName(elementName),
             namespaceURI: namespaceURI,
             qualifiedName: qName,
-            attributes: attributeDict,
+            attributes: attributeDict.reduce(into: [XMLAttribute: String]()) { sum, pair in
+                let (key, value) = pair
+                sum[XMLAttribute(key)] = value
+            },
             children: []
         )
         elementStack.append(element)

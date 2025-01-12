@@ -6,47 +6,47 @@ struct XMLSnapshotTests {
     @Test
     func builder() throws {
         let snapshot = XMLPartialSnapshot(parentID: nil, createContext: XMLCreateContext(indent: 0, isFirst: false, isLast: false, variables: [:])) {
-            Element("svg") {
-                Attr("version", "1.1")
-                Attr("width", "300")
-                Attr("height", "200")
-                Attr("xmlns", "http://www.w3.org/2000/svg")
+            Element(.svg) {
+                Attr(.version, "1.1")
+                Attr(.width, "300")
+                Attr(.height, "200")
+                Attr(.xmlns, "http://www.w3.org/2000/svg")
                 
-                Element("defs") {
-                    Element("linearGradient") {
-                        Attr("id", "myGradient")
+                Element(.defs) {
+                    Element(.linearGradient) {
+                        Attr(.id, "myGradient")
                         
-                        Element("stop") {
-                            Attr("stop-offset", "0.0")
-                            Attr("stop-color", "#000")
+                        Element(.stop) {
+                            Attr(.stopOffset, "0.0")
+                            Attr(.stopColor, "#000")
                         }
                         
-                        Element("stop") {
-                            Attr("stop-offset", "1.0")
-                            Attr("stop-color", "#FFF")
+                        Element(.stop) {
+                            Attr(.stopOffset, "1.0")
+                            Attr(.stopColor, "#FFF")
                         }
                     }
                 }
                 
-                Element("rect") {
-                    Attr("width", "100%")
-                    Attr("height", "100%")
-                    Attr("fill", "red")
+                Element(.rect) {
+                    Attr(.width, "100%")
+                    Attr(.height, "100%")
+                    Attr(.fill, "red")
                 }
                 
-                Element("circle") {
-                    Attr("cx", "150")
-                    Attr("cy", "100")
-                    Attr("r", "80")
-                    Attr("fill", "green")
+                Element(.circle) {
+                    Attr(.cx, "150")
+                    Attr(.cy, "100")
+                    Attr(.r, "80")
+                    Attr(.fill, "green")
                 }
                 
-                Element("text") {
-                    Attr("x", "150")
-                    Attr("y", "125")
-                    Attr("font-size", "60")
-                    Attr("text-anchor", "middle")
-                    Attr("fill", "white")
+                Element(.text) {
+                    Attr(.x, "150")
+                    Attr(.y, "125")
+                    Attr(.fontSize, "60")
+                    Attr(.textAnchor, "middle")
+                    Attr(.fill, "white")
                     
                     Text("SVG")
                 }

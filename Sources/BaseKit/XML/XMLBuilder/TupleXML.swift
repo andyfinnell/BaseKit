@@ -6,8 +6,8 @@ public struct TupleXML<each X: XML>: XML {
         self.xml = xml
     }
     
-    public func attributes(context: XMLBuilderContext) -> [String: String] {
-        var allAttributes = [String: String]()
+    public func attributes(context: XMLBuilderContext) -> [XMLAttribute: String] {
+        var allAttributes = [XMLAttribute: String]()
         for child in repeat (each xml) {
             allAttributes.merge(child.attributes(context: context), uniquingKeysWith: { _, new in new })
         }

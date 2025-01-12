@@ -27,10 +27,10 @@ struct XMLUpdateBuilderTests {
         
         let addRect = XMLCommand("Add rect") {
             InsertXML(into: rootID!) {
-                Element("rect") {
-                    Attr("width", "50")
-                    Attr("height", "25")
-                    Attr("fill", "blue")
+                Element(.rect) {
+                    Attr(.width, "50")
+                    Attr(.height, "25")
+                    Attr(.fill, "blue")
                 }
             }
             
@@ -62,19 +62,19 @@ struct XMLUpdateBuilderTests {
         
         let addRect = XMLCommand("Add rect") {
             InsertXML(into: rootID!, at: .at(0)) {
-                Element("defs") {
-                    Element("solidColor") {
+                Element(.defs) {
+                    Element(.solidColor) {
                         GenRefID("insertFill", withTemplate: "rect-fill")
-                        Attr("solid-color", "#F00")
+                        Attr(.solidColor, "#F00")
                     }
                 }
             }
             
             InsertXML(into: rootID!) {
-                Element("rect") {
-                    Attr("width", "50")
-                    Attr("height", "25")
-                    Attr("fill", XMLRefID("insertFill") { "url(#\($0))" })
+                Element(.rect) {
+                    Attr(.width, "50")
+                    Attr(.height, "25")
+                    Attr(.fill, XMLRefID("insertFill") { "url(#\($0))" })
                 }
             }
             

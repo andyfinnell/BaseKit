@@ -3,6 +3,36 @@ import XCTest
 import BaseKit
 import TestKit
 
+extension XMLName {
+    static let svg = XMLName("svg")
+    static let rect = XMLName("rect")
+    static let text = XMLName("text")
+    static let circle = XMLName("circle")
+    static let defs = XMLName("defs")
+    static let solidColor = XMLName("solidColor")
+    static let linearGradient = XMLName("linearGradient")
+    static let stop = XMLName("stop")
+}
+
+extension XMLAttribute {
+    static let width = XMLAttribute("width")
+    static let height = XMLAttribute("height")
+    static let fill = XMLAttribute("fill")
+    static let solidColor = XMLAttribute("solid-color")
+    static let x = XMLAttribute("x")
+    static let y = XMLAttribute("y")
+    static let fontSize = XMLAttribute("font-size")
+    static let textAnchor = XMLAttribute("text-anchor")
+    static let rx = XMLAttribute("rx")
+    static let version = XMLAttribute("version")
+    static let xmlns = XMLAttribute("xmlns")
+    static let stopOffset = XMLAttribute("stop-offset")
+    static let stopColor = XMLAttribute("stop-color")
+    static let cx = XMLAttribute("cx")
+    static let cy = XMLAttribute("cy")
+    static let r = XMLAttribute("r")
+}
+
 final class XMLDatabaseTests: XCTestCase {
     private var subject: XMLDatabase!
     
@@ -62,10 +92,10 @@ final class XMLDatabaseTests: XCTestCase {
                                                 XMLElement(
                                                     id: elementID,
                                                     parentID: rootID,
-                                                    name: "rect",
+                                                    name: .rect,
                                                     namespaceURI: nil,
                                                     qualifiedName: nil,
-                                                    attributes: ["width": "50", "height": "25", "fill": "blue"],
+                                                    attributes: [.width: "50", .height: "25", .fill: "blue"],
                                                     children: []
                                                 )
                                             ),
@@ -97,9 +127,9 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.update(rootID!, .element(.svg)),
             XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
-            XMLDatabaseChange.create(elementID, .element("rect")),
+            XMLDatabaseChange.create(elementID, .element(.rect)),
             XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
         ])
         XCTAssertEqual(changes, expectedIDs)
@@ -128,7 +158,7 @@ final class XMLDatabaseTests: XCTestCase {
                                     XMLElement(
                                         id: elementID,
                                         parentID: rootID,
-                                        name: "defs",
+                                        name: .defs,
                                         namespaceURI: nil,
                                         qualifiedName: nil,
                                         attributes: [:],
@@ -138,7 +168,7 @@ final class XMLDatabaseTests: XCTestCase {
                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace2ID, parentID: rootID, text: "\n"))
                             )
                         },
-                        existingElementQuery: .name("defs"),
+                        existingElementQuery: .name(.defs),
                         changesFactory: { defsElement in
                             return [
                                 XMLChange.create(
@@ -152,11 +182,11 @@ final class XMLDatabaseTests: XCTestCase {
                                                     XMLElement(
                                                         id: colorID,
                                                         parentID: defsElement.id,
-                                                        name: "solidColor",
+                                                        name: .solidColor,
                                                         namespaceURI: nil,
                                                         qualifiedName: nil,
                                                         attributes: [
-                                                            "solid-color": "#FFF",
+                                                            .solidColor: "#FFF",
                                                         ],
                                                         children: []
                                                     )
@@ -195,13 +225,13 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.update(rootID!, .element(.svg)),
             XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
-            XMLDatabaseChange.create(elementID, .element("defs")),
+            XMLDatabaseChange.create(elementID, .element(.defs)),
             XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
-            XMLDatabaseChange.update(elementID, .element("defs")),
+            XMLDatabaseChange.update(elementID, .element(.defs)),
             XMLDatabaseChange.create(colorWhitespace1ID, .ignorableWhitespace),
-            XMLDatabaseChange.create(colorID, .element("solidColor")),
+            XMLDatabaseChange.create(colorID, .element(.solidColor)),
             XMLDatabaseChange.create(colorWhitespace2ID, .ignorableWhitespace),
             
         ])
@@ -228,7 +258,7 @@ final class XMLDatabaseTests: XCTestCase {
         subject = try XMLDatabase(text: svgString)
 
         let rootID = subject.rootValues.first?.id
-        let defsID = subject[.element("svg").element("defs")]!.id
+        let defsID = subject[.element(.svg).element(.defs)]!.id
         let whitespace1ID = XMLID()
         let elementID = XMLID()
         let whitespace2ID = XMLID()
@@ -250,7 +280,7 @@ final class XMLDatabaseTests: XCTestCase {
                                     XMLElement(
                                         id: elementID,
                                         parentID: rootID,
-                                        name: "defs",
+                                        name: .defs,
                                         namespaceURI: nil,
                                         qualifiedName: nil,
                                         attributes: [:],
@@ -260,7 +290,7 @@ final class XMLDatabaseTests: XCTestCase {
                                 XMLValue.ignorableWhitespace(XMLIgnorableWhitespace(id: whitespace2ID, parentID: rootID, text: "\n"))
                             )
                         },
-                        existingElementQuery: .name("defs"),
+                        existingElementQuery: .name(.defs),
                         changesFactory: { defsElement in
                             return [
                                 XMLChange.create(
@@ -274,11 +304,11 @@ final class XMLDatabaseTests: XCTestCase {
                                                     XMLElement(
                                                         id: colorID,
                                                         parentID: defsElement.id,
-                                                        name: "solidColor",
+                                                        name: .solidColor,
                                                         namespaceURI: nil,
                                                         qualifiedName: nil,
                                                         attributes: [
-                                                            "solid-color": "#FFF",
+                                                            .solidColor: "#FFF",
                                                         ],
                                                         children: []
                                                     )
@@ -317,9 +347,9 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.update(defsID, .element("defs")),
+            XMLDatabaseChange.update(defsID, .element(.defs)),
             XMLDatabaseChange.create(colorWhitespace1ID, .ignorableWhitespace),
-            XMLDatabaseChange.create(colorID, .element("solidColor")),
+            XMLDatabaseChange.create(colorID, .element(.solidColor)),
             XMLDatabaseChange.create(colorWhitespace2ID, .ignorableWhitespace),
             
         ])
@@ -328,8 +358,8 @@ final class XMLDatabaseTests: XCTestCase {
 
     func testCommitDestroyObject() throws {
         let rootID = subject.rootValues.first?.id
-        let text = subject[XMLPath.element("svg").element("text")]
-        let textText = subject[XMLPath.element("svg").element("text").text()]
+        let text = subject[XMLPath.element(.svg).element(.text)]
+        let textText = subject[XMLPath.element(.svg).element(.text).text()]
         
         let deleteText = XMLCommand(
             name: "Delete rect",
@@ -356,15 +386,15 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.update(rootID!, .element("svg")),
-            XMLDatabaseChange.destroy(text!.id, .element("text")),
+            XMLDatabaseChange.update(rootID!, .element(.svg)),
+            XMLDatabaseChange.destroy(text!.id, .element(.text)),
             XMLDatabaseChange.destroy(textText!.id, .text),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
     
     func testCommitUpdateContentText() throws {
-        let textText = subject[XMLPath.element("svg").element("text").text()]
+        let textText = subject[XMLPath.element(.svg).element(.text).text()]
         let updateText = XMLCommand(
             name: "Update text",
             changes: [
@@ -396,12 +426,12 @@ final class XMLDatabaseTests: XCTestCase {
     }
     
     func testCommitAttributeInsert() throws {
-        let circle = subject[XMLPath.element("svg").element("circle")]
+        let circle = subject[XMLPath.element(.svg).element(.circle)]
         let updateCircle = XMLCommand(
             name: "Update position",
             changes: [
-                .upsertAttribute(XMLAttributeUpsertChange(elementID: circle!.id, attributeName: "x", attributeValue: { _ in "25" })),
-                .upsertAttribute(XMLAttributeUpsertChange(elementID: circle!.id, attributeName: "y", attributeValue: { _ in "15" })),
+                .upsertAttribute(XMLAttributeUpsertChange(elementID: circle!.id, attributeName: .x, attributeValue: { _ in "25" })),
+                .upsertAttribute(XMLAttributeUpsertChange(elementID: circle!.id, attributeName: .y, attributeValue: { _ in "15" })),
             ]
         )
         let (_, changes) = try subject.perform(updateCircle)
@@ -423,17 +453,17 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.update(circle!.id, .element("circle")),
+            XMLDatabaseChange.update(circle!.id, .element(.circle)),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
     
     func testCommitAttributeUpdate() throws {
-        let text = subject[XMLPath.element("svg").element("text")]
+        let text = subject[XMLPath.element(.svg).element(.text)]
         let updateText = XMLCommand(
             name: "Update font size",
             changes: [
-                .upsertAttribute(XMLAttributeUpsertChange(elementID: text!.id, attributeName: "font-size", attributeValue: { _ in "72" }))
+                .upsertAttribute(XMLAttributeUpsertChange(elementID: text!.id, attributeName: .fontSize, attributeValue: { _ in "72" }))
             ]
         )
         let (_, changes) = try subject.perform(updateText)
@@ -455,17 +485,17 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.update(text!.id, .element("text")),
+            XMLDatabaseChange.update(text!.id, .element(.text)),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
     
     func testCommitAttributeRemove() throws {
-        let text = subject[XMLPath.element("svg").element("text")]
+        let text = subject[XMLPath.element(.svg).element(.text)]
         let updateText = XMLCommand(
             name: "Remove text anchor",
             changes: [
-                .destroyAttribute(XMLAttributeDestroyChange(elementID: text!.id, attributeName: "text-anchor"))
+                .destroyAttribute(XMLAttributeDestroyChange(elementID: text!.id, attributeName: .textAnchor))
             ]
         )
         let (_, changes) = try subject.perform(updateText)
@@ -487,13 +517,13 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.update(text!.id, .element("text")),
+            XMLDatabaseChange.update(text!.id, .element(.text)),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
     
     func testCommitReorder() throws {
-        let svg = subject[XMLPath.element("svg")]
+        let svg = subject[XMLPath.element(.svg)]
         let updateText = XMLCommand(
             name: "Reorder elements",
             changes: [
@@ -520,13 +550,13 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(output, expected)
         
         let expectedIDs = Set([
-            XMLDatabaseChange.update(svg!.id, .element("svg")),
+            XMLDatabaseChange.update(svg!.id, .element(.svg)),
         ])
         XCTAssertEqual(changes, expectedIDs)
     }
     
     func testUndo() throws {
-        let text = subject[XMLPath.element("svg").element("text")]
+        let text = subject[XMLPath.element(.svg).element(.text)]
         
         let deleteText = XMLCommand(
             name: "Delete rect",
@@ -574,10 +604,10 @@ final class XMLDatabaseTests: XCTestCase {
                                                 XMLElement(
                                                     id: elementID,
                                                     parentID: rootID,
-                                                    name: "rect",
+                                                    name: .rect,
                                                     namespaceURI: nil,
                                                     qualifiedName: nil,
-                                                    attributes: ["width": "50", "height": "25", "fill": "blue"],
+                                                    attributes: [.width: "50", .height: "25", .fill: "blue"],
                                                     children: []
                                                 )
                                             ),
@@ -589,7 +619,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .upsertAttribute(
                     XMLAttributeUpsertChange(
                         elementID: elementID,
-                        attributeName: "rx",
+                        attributeName: .rx,
                         attributeValue: { _ in "4"
                         })
                 )
@@ -616,11 +646,11 @@ final class XMLDatabaseTests: XCTestCase {
         XCTAssertEqual(outputAfterAdd, expectedAfterAdd)
         
         let expectedIDsAfterAdd = Set([
-            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.update(rootID!, .element(.svg)),
             XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
-            XMLDatabaseChange.create(elementID, .element("rect")),
+            XMLDatabaseChange.create(elementID, .element(.rect)),
             XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
-            XMLDatabaseChange.update(elementID, .element("rect"))
+            XMLDatabaseChange.update(elementID, .element(.rect))
         ])
         XCTAssertEqual(changesAfterAdd, expectedIDsAfterAdd)
 
@@ -670,10 +700,10 @@ final class XMLDatabaseTests: XCTestCase {
                                                 XMLElement(
                                                     id: elementID,
                                                     parentID: rootID,
-                                                    name: "rect",
+                                                    name: .rect,
                                                     namespaceURI: nil,
                                                     qualifiedName: nil,
-                                                    attributes: ["width": "50", "height": "25", "fill": "blue"],
+                                                    attributes: [.width: "50", .height: "25", .fill: "blue"],
                                                     children: []
                                                 )
                                             ),
@@ -703,9 +733,9 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output1, expected1)
         let expectedIDs1 = Set([
-            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.update(rootID!, .element(.svg)),
             XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
-            XMLDatabaseChange.create(elementID, .element("rect")),
+            XMLDatabaseChange.create(elementID, .element(.rect)),
             XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
         ])
         XCTAssertEqual(changes1, expectedIDs1)
@@ -716,7 +746,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .upsertAttribute(
                     XMLAttributeUpsertChange(
                         elementID: elementID,
-                        attributeName: "height",
+                        attributeName: .height,
                         attributeValue: { _ in "50"
                         })
                 )
@@ -740,7 +770,7 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output2, expected2)
         let expectedIDs2 = Set([
-            XMLDatabaseChange.update(elementID, .element("rect")),
+            XMLDatabaseChange.update(elementID, .element(.rect)),
         ])
         XCTAssertEqual(changes2, expectedIDs2)
 
@@ -750,7 +780,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .upsertAttribute(
                     XMLAttributeUpsertChange(
                         elementID: elementID,
-                        attributeName: "height",
+                        attributeName: .height,
                         attributeValue: { _ in "75"
                         })
                 )
@@ -774,7 +804,7 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output3, expected3)
         let expectedIDs3 = Set([
-            XMLDatabaseChange.update(elementID, .element("rect")),
+            XMLDatabaseChange.update(elementID, .element(.rect)),
         ])
         XCTAssertEqual(changes3, expectedIDs3)
 
@@ -824,10 +854,10 @@ final class XMLDatabaseTests: XCTestCase {
                                                 XMLElement(
                                                     id: elementID,
                                                     parentID: rootID,
-                                                    name: "rect",
+                                                    name: .rect,
                                                     namespaceURI: nil,
                                                     qualifiedName: nil,
-                                                    attributes: ["width": "50", "height": "25", "fill": "blue"],
+                                                    attributes: [.width: "50", .height: "25", .fill: "blue"],
                                                     children: []
                                                 )
                                             ),
@@ -857,9 +887,9 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output1, expected1)
         let expectedIDs1 = Set([
-            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.update(rootID!, .element(.svg)),
             XMLDatabaseChange.create(whitespace1ID, .ignorableWhitespace),
-            XMLDatabaseChange.create(elementID, .element("rect")),
+            XMLDatabaseChange.create(elementID, .element(.rect)),
             XMLDatabaseChange.create(whitespace2ID, .ignorableWhitespace),
         ])
         XCTAssertEqual(changes1, expectedIDs1)
@@ -870,7 +900,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .upsertAttribute(
                     XMLAttributeUpsertChange(
                         elementID: elementID,
-                        attributeName: "height",
+                        attributeName: .height,
                         attributeValue: { _ in "50"
                         })
                 )
@@ -894,7 +924,7 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output2, expected2)
         let expectedIDs2 = Set([
-            XMLDatabaseChange.update(elementID, .element("rect")),
+            XMLDatabaseChange.update(elementID, .element(.rect)),
         ])
         XCTAssertEqual(changes2, expectedIDs2)
 
@@ -904,7 +934,7 @@ final class XMLDatabaseTests: XCTestCase {
                 .upsertAttribute(
                     XMLAttributeUpsertChange(
                         elementID: elementID,
-                        attributeName: "height",
+                        attributeName: .height,
                         attributeValue: { _ in "75"
                         })
                 )
@@ -928,15 +958,15 @@ final class XMLDatabaseTests: XCTestCase {
         
         XCTAssertEqual(output3, expected3)
         let expectedIDs3 = Set([
-            XMLDatabaseChange.update(elementID, .element("rect")),
+            XMLDatabaseChange.update(elementID, .element(.rect)),
         ])
         XCTAssertEqual(changes3, expectedIDs3)
 
         let changes4 = try subject.cancelCommandStream()
         let expectedIDs4 = Set([
-            XMLDatabaseChange.update(rootID!, .element("svg")),
+            XMLDatabaseChange.update(rootID!, .element(.svg)),
             XMLDatabaseChange.destroy(whitespace1ID, .ignorableWhitespace),
-            XMLDatabaseChange.destroy(elementID, .element("rect")),
+            XMLDatabaseChange.destroy(elementID, .element(.rect)),
             XMLDatabaseChange.destroy(whitespace2ID, .ignorableWhitespace),
         ])
         XCTAssertEqual(changes4, expectedIDs4)
@@ -961,9 +991,9 @@ final class XMLDatabaseTests: XCTestCase {
         try subject.beginCommandStream(withName: "Add rect")
         let command = XMLCommand("Add stuff") {
             InsertXML {
-                Element("rect") {
-                    Attr("width", "50")
-                    Attr("height", "50")
+                Element(.rect) {
+                    Attr(.width, "50")
+                    Attr(.height, "50")
                 }
             }
         }
@@ -974,9 +1004,9 @@ final class XMLDatabaseTests: XCTestCase {
     func testUpdateCommandStreamWhenNotOpen() throws {
         let command = XMLCommand("Add stuff") {
             InsertXML {
-                Element("rect") {
-                    Attr("width", "50")
-                    Attr("height", "50")
+                Element(.rect) {
+                    Attr(.width, "50")
+                    Attr(.height, "50")
                 }
             }
         }
@@ -985,12 +1015,12 @@ final class XMLDatabaseTests: XCTestCase {
     }
     
     func testSubscript() throws {
-        assertElement(subject[XMLPath.element("svg")], withName: "svg")
-        assertText(subject[XMLPath.element("svg").text(at: 1)], withContent: "\n\n  ")
-        XCTAssertNil(subject[XMLPath.element("svg").whitespace()])
+        assertElement(subject[XMLPath.element(.svg)], withName: .svg)
+        assertText(subject[XMLPath.element(.svg).text(at: 1)], withContent: "\n\n  ")
+        XCTAssertNil(subject[XMLPath.element(.svg).whitespace()])
     }
     
-    private func assertElement(_ value: XMLValue?, withName name: String, file: StaticString = #filePath, line: UInt = #line) {
+    private func assertElement(_ value: XMLValue?, withName name: XMLName, file: StaticString = #filePath, line: UInt = #line) {
         guard case let .element(element) = value else {
             XCTFail("Expected \(String(describing: value)) to be an element with name \(name)", file: file, line: line)
             return

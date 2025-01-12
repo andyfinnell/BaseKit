@@ -50,7 +50,7 @@ public struct XMLUpdateContentChange: Sendable {
 }
 
 public enum XMLUpsertQuery: Sendable {
-    case name(String)
+    case name(XMLName)
 }
 
 public struct XMLUpsertChange: Sendable {
@@ -89,12 +89,12 @@ public struct XMLUpdateContext: Sendable {
 
 public struct XMLAttributeUpsertChange: Sendable {
     public let elementID: XMLID
-    public let attributeName: String
+    public let attributeName: XMLAttribute
     public let attributeValue: @Sendable (XMLUpdateContext) -> String
     
     public init(
         elementID: XMLID,
-        attributeName: String,
+        attributeName: XMLAttribute,
         attributeValue: @escaping @Sendable (XMLUpdateContext) -> String
     ) {
         self.elementID = elementID
@@ -105,9 +105,9 @@ public struct XMLAttributeUpsertChange: Sendable {
 
 public struct XMLAttributeDestroyChange: Sendable {
     public let elementID: XMLID
-    public let attributeName: String
+    public let attributeName: XMLAttribute
 
-    public init(elementID: XMLID, attributeName: String) {
+    public init(elementID: XMLID, attributeName: XMLAttribute) {
         self.elementID = elementID
         self.attributeName = attributeName
     }

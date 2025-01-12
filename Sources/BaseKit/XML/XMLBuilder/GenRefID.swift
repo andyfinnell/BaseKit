@@ -7,7 +7,7 @@ public struct GenRefID: XML {
         self.template = template
     }
     
-    public func attributes(context: XMLBuilderContext) -> [String: String] {
+    public func attributes(context: XMLBuilderContext) -> [XMLAttribute: String] {
         [:]
     }
     
