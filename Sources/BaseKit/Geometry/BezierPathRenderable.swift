@@ -6,10 +6,10 @@ public protocol BezierPathRenderable: BezierPathRepresentable {
     var strokeLineWidth: Real { get set }
     var strokeLineCap: LineCap { get set }
     var strokeLineJoin: LineJoin { get set }
-    var miterLimit: Real { get set }
-    var flatness: Real { get set }
+    var strokeMiterLimit: Real { get set }
+    var strokeFlatness: Real { get set }
     
-    mutating func setLineDash(_ pattern: [Real], phase: Real)
+    mutating func setStrokeLineDash(_ pattern: [Real], phase: Real)
 }
 
 extension BezierPathRenderable {
@@ -18,7 +18,7 @@ extension BezierPathRenderable {
         strokeLineWidth = other.strokeLineWidth
         strokeLineCap = other.strokeLineCap
         strokeLineJoin = other.strokeLineJoin
-        miterLimit = other.miterLimit
-        flatness = other.flatness
+        strokeMiterLimit = other.strokeMiterLimit
+        strokeFlatness = other.strokeFlatness
     }
 }
