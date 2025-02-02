@@ -139,6 +139,35 @@ public struct BezierPath: Hashable, BezierPathRepresentable, Codable, Sendable {
         elements = elements.map { $0.transform(transform) }
     }
     
+    /// These are loose bounds that are quick to calculate
+    public var quickBounds: Rect? {
+        var minX: Real?
+        var maxX: Real?
+        var minY: Real?
+        var maxY: Real?
+        
+        for element in elements {
+            switch element {
+            case let .move(to: point):
+                point.update(minX: &minX, maxX: &maxX, minY: &minY, maxY: &maxY)
+            case let .line(to: point):
+                point.update(minX: &minX, maxX: &maxX, minY: &minY, maxY: &maxY)
+            case let .curve(to: point, control1: control1, control2: control2):
+                point.update(minX: &minX, maxX: &maxX, minY: &minY, maxY: &maxY)
+                control1.update(minX: &minX, maxX: &maxX, minY: &minY, maxY: &maxY)
+                control2.update(minX: &minX, maxX: &maxX, minY: &minY, maxY: &maxY)
+            case .closeSubpath:
+                break // nop
+            }
+        }
+        
+        if let minX, let maxX, let minY, let maxY {
+            return Rect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+        } else {
+            return nil
+        }
+    }
+
     public func reversed() -> BezierPath {
         var subpaths = [[BezierPath.Element]]()
         var currentSubpath = [BezierPath.Element]()
