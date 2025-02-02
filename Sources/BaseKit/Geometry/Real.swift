@@ -3,7 +3,7 @@ import Foundation
 /// A cross platform type that's the same size
 public typealias Real = Double
 
-extension Real {
+public extension Real {
     var sign: Int {
         self < 0.0 ? -1 : 1
     }
