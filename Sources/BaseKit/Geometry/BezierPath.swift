@@ -207,7 +207,7 @@ public struct BezierPath: Hashable, BezierPathRepresentable, Codable, Sendable {
 
 }
 
-extension BezierPath.Element {
+public extension BezierPath.Element {
     func transform(_ transform: BaseKit.Transform) -> BezierPath.Element {
         switch self {
         case let .move(to: point):

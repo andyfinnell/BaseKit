@@ -14,7 +14,7 @@ public protocol BezierPathRepresentable {
     mutating func transform(_ transform: BaseKit.Transform)
 }
 
-extension BezierPathRepresentable {
+public extension BezierPathRepresentable {
     
     mutating func append<B: BezierPathRepresentable>(_ other: B) {
         other.enumerate { element in

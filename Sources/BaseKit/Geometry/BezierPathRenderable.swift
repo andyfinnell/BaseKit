@@ -12,7 +12,7 @@ public protocol BezierPathRenderable: BezierPathRepresentable {
     mutating func setStrokeLineDash(_ pattern: [Real], phase: Real)
 }
 
-extension BezierPathRenderable {
+public extension BezierPathRenderable {
     mutating func copyAttributes<B: BezierPathRenderable>(from other: B) {
         fillRule = other.fillRule
         strokeLineWidth = other.strokeLineWidth
