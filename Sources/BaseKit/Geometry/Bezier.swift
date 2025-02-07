@@ -12,7 +12,7 @@ public enum Bezier {
     ///
     /// bezierPoints, leftCurve, rightCurve will have a length of degree + 1.
     /// degree is the order of the bezier path, which will be cubic (3) most of the time.
-    static func splitBezier(_ bezierPoints: [Point], ofDegree degree: Int, at parameter: Real) -> (point: Point, leftCurve: [Point], rightCurve: [Point]) {
+    public static func splitBezier(_ bezierPoints: [Point], ofDegree degree: Int, at parameter: Real) -> (point: Point, leftCurve: [Point], rightCurve: [Point]) {
         // With this algorithm we start out with the points in the bezier path.
         var points = Array(bezierPoints[0...degree])
         var leftArray = Array(repeating: Point.zero, count: degree + 1)
@@ -35,13 +35,13 @@ public enum Bezier {
         return (point: points[0], leftCurve: leftArray, rightCurve: rightArray)
     }
 
-    static func findRoots(for bezierPoints: [Point], ofDegree degree: Int) -> [Real] {
+    public static func findRoots(for bezierPoints: [Point], ofDegree degree: Int) -> [Real] {
         var results = [Real]()
         findRoots(for: bezierPoints, ofDegree: degree, atDepth: 0, into: &results)
         return results
     }
     
-    static func closestLocation(on bezierPoints: [Point], to point: Point) -> BezierCurveLocation {
+    public static func closestLocation(on bezierPoints: [Point], to point: Point) -> BezierCurveLocation {
         let relatedBezier = convertBezier(bezierPoints, relativeTo: point)
                 
         let locations = [
