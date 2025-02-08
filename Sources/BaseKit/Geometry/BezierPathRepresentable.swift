@@ -39,13 +39,19 @@ public extension BezierPathRepresentable {
             case let .move(to: endPoint):
                 currentPoint = endPoint
             case let .line(to: endPoint):
-                let line = NormalizedLine(point1: currentPoint, point2: endPoint)
-                distances.append(line.distance(to: point))
+                let location = Bezier.closestLocation(
+                    on: Bezier.convertLineToCubicBezier(start: currentPoint, end: endPoint),
+                    to: point
+                )
+                distances.append(abs(location.distance))
                 currentPoint = endPoint
                 
             case let .curve(to: endPoint2, control1: control1, control2: control2):
-                let location = Bezier.closestLocation(on: [currentPoint, control1, control2, endPoint2], to: point)
-                distances.append(location.distance)
+                let location = Bezier.closestLocation(
+                    on: [currentPoint, control1, control2, endPoint2],
+                    to: point
+                )
+                distances.append(abs(location.distance))
                 currentPoint = endPoint2
                 
             case .closeSubpath:
@@ -54,6 +60,5 @@ public extension BezierPathRepresentable {
         }
         return distances.min() ?? .greatestFiniteMagnitude
     }
-
 }
 

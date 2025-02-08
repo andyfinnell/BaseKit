@@ -16,7 +16,7 @@ public struct NormalizedLine: Hashable, Sendable {
     }
     
     public func distance(to point: Point) -> Real {
-        a * Double(point.x) + b * Double(point.y) + c
+        a * point.x + b * point.y + c
     }
     
     public func intersectionWith(_ other: NormalizedLine) -> Point {

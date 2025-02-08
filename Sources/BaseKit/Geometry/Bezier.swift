@@ -45,16 +45,31 @@ public enum Bezier {
         let relatedBezier = convertBezier(bezierPoints, relativeTo: point)
                 
         let locations = [
-            BezierCurveLocation(parameter: 0, distance: bezierPoints[0].distance(to: point)),
-            BezierCurveLocation(parameter: 1, distance: bezierPoints[3].distance(to: point)),
+            BezierCurveLocation(parameter: 0, distance: abs(bezierPoints[0].distance(to: point))),
+            BezierCurveLocation(parameter: 1, distance: abs(bezierPoints[3].distance(to: point))),
         ] + findRoots(for: relatedBezier, ofDegree: 5)
             .map { root in
                 let split = splitBezier(bezierPoints, ofDegree: 3, at: root)
-                return BezierCurveLocation(parameter: root, distance: split.point.distance(to: point))
+                return BezierCurveLocation(parameter: root, distance: abs(split.point.distance(to: point)))
             }
             .sorted { $0.distance < $1.distance }
         
         return locations[0]
+    }
+    
+    public static func convertLineToCubicBezier(start: Point, end: Point) -> [Point] {
+        // Convert the line into a bezier curve to keep our intersection algorithm general (i.e. only
+        //  has to deal with curves, not lines). As long as the control points are colinear with the
+        //  end points, it'll be a line. But for consistency sake, we put the control points inside
+        //  the end points, 1/3 of the total distance away from their respective end point.
+        let distance = start.distance(to: end)
+        let leftTangent = (end - start).normalizedVector
+        return [
+            start,
+            start + leftTangent.unitScale(distance / 3.0),
+            start + leftTangent.unitScale(2.0 * distance / 3.0),
+            end,
+        ]
     }
 }
 

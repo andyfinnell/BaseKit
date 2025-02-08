@@ -1,6 +1,5 @@
 import Foundation
 
-
 public func *(lhs: Point, rhs: Real) -> Point {
     .init(x: lhs.x * rhs, y: lhs.y * rhs)
 }
@@ -32,9 +31,9 @@ public extension Point {
         return self / length
     }
     
-    func distance(to point2: Point) -> Double {
-        let xDelta = Double(point2.x - x)
-        let yDelta = Double(point2.y - y)
+    func distance(to point2: Point) -> Real {
+        let xDelta = point2.x - x
+        let yDelta = point2.y - y
         
         return sqrt(xDelta * xDelta + yDelta * yDelta)
     }
@@ -107,12 +106,15 @@ public extension Point {
 ///  almost the area of the triangle -- we'd need to divide by 2. But since we only
 ///  care about the direction (i.e. the sign) dividing by 2 is an unnecessary step.
 /// See http://mathworld.wolfram.com/TriangleArea.html for the signed area of a triangle.
-public func counterClockwiseTurn(_ point1: Point, _ point2: Point, _ point3: Point) -> Double {
-    
-    let xDeltaA = Double(point2.x - point1.x)
-    let yDeltaB = Double(point3.y - point1.y)
-    let yDeltaC = Double(point2.y - point1.y)
-    let xDeltaD = Double(point3.x - point1.x)
+public func counterClockwiseTurn(_ point1: Point, _ point2: Point, _ point3: Point) -> Real {
+    let xDeltaA = point2.x - point1.x
+    let yDeltaB = point3.y - point1.y
+    let yDeltaC = point2.y - point1.y
+    let xDeltaD = point3.x - point1.x
     
     return xDeltaA * yDeltaB - yDeltaC * xDeltaD
+}
+
+public func isColinear(_ point1: Point, _ point2: Point, _ point3: Point) -> Bool {
+    counterClockwiseTurn(point1, point2, point3).isClose(to: 0.0, threshold: 1e-6)
 }
