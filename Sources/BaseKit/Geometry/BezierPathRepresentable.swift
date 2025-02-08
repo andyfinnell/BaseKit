@@ -33,11 +33,13 @@ public extension BezierPathRepresentable {
     
     func distance(to point: Point) -> Real {
         var currentPoint = Point.zero
+        var pathStartPoint: Point?
         var distances = [Real]()
         enumerate { element in
             switch element {
             case let .move(to: endPoint):
                 currentPoint = endPoint
+                pathStartPoint = endPoint
             case let .line(to: endPoint):
                 let location = Bezier.closestLocation(
                     on: Bezier.convertLineToCubicBezier(start: currentPoint, end: endPoint),
@@ -55,7 +57,16 @@ public extension BezierPathRepresentable {
                 currentPoint = endPoint2
                 
             case .closeSubpath:
+                if let pathStartPoint, pathStartPoint != currentPoint {
+                    // Draw a line between ending point and starting point
+                    let location = Bezier.closestLocation(
+                        on: Bezier.convertLineToCubicBezier(start: currentPoint, end: pathStartPoint),
+                        to: point
+                    )
+                    distances.append(abs(location.distance))
+                }
                 currentPoint = .zero
+                pathStartPoint = nil
             }
         }
         return distances.min() ?? .greatestFiniteMagnitude

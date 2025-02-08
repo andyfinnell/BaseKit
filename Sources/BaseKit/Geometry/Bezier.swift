@@ -44,14 +44,14 @@ public enum Bezier {
     public static func closestLocation(on bezierPoints: [Point], to point: Point) -> BezierCurveLocation {
         let relatedBezier = convertBezier(bezierPoints, relativeTo: point)
                 
-        let locations = [
+        let locations = ([
             BezierCurveLocation(parameter: 0, distance: abs(bezierPoints[0].distance(to: point))),
             BezierCurveLocation(parameter: 1, distance: abs(bezierPoints[3].distance(to: point))),
         ] + findRoots(for: relatedBezier, ofDegree: 5)
             .map { root in
                 let split = splitBezier(bezierPoints, ofDegree: 3, at: root)
                 return BezierCurveLocation(parameter: root, distance: abs(split.point.distance(to: point)))
-            }
+            })
             .sorted { $0.distance < $1.distance }
         
         return locations[0]
