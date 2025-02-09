@@ -1,5 +1,5 @@
 
-public struct Angle: Hashable, Sendable, Comparable {
+public struct Angle: Hashable, Sendable, Comparable, AdditiveArithmetic {
     public let radians: Real
     public let degrees: Real
     
@@ -15,5 +15,15 @@ public struct Angle: Hashable, Sendable, Comparable {
     
     public static func <(lhs: Angle, rhs: Angle) -> Bool {
         lhs.radians < rhs.radians
+    }
+    
+    public static let zero = Angle(radians: 0.0)
+    
+    public static func +(lhs: Angle, rhs: Angle) -> Angle {
+        Angle(radians: lhs.radians + rhs.radians)
+    }
+    
+    public static func -(lhs: Angle, rhs: Angle) -> Angle {
+        Angle(radians: lhs.radians - rhs.radians)
     }
 }
