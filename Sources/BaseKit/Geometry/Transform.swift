@@ -50,6 +50,12 @@ public extension Transform {
         )
     }
     
+    init(rotate angle: Real, anchor: Point) {
+        self = Transform(translateX: anchor.x, translateY: anchor.y)
+            .concatenating(Transform(rotate: angle))
+            .concatenating(Transform(translateX: -anchor.x, translateY: -anchor.y))
+    }
+    
     init(skewX angle: Real) {
         self.init(c: tan(angle))
     }

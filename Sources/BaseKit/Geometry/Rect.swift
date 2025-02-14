@@ -46,4 +46,15 @@ public struct Rect: Hashable, Codable, Sendable {
     public func contains(_ point: Point) -> Bool {
         point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY
     }
+    
+    public func isClose(to other: Rect, threshold: Real) -> Bool {
+        origin.isClose(to: other.origin, threshold: threshold)
+        && size.isClose(to: other.size, threshold: threshold)
+    }
+}
+
+public extension Optional where Wrapped == Rect {
+    func union(_ other: Rect) -> Rect {
+        map { $0.union(other) } ?? other
+    }
 }

@@ -168,6 +168,45 @@ public struct BezierPath: Hashable, BezierPathRepresentable, Codable, Sendable {
         }
     }
 
+    public var bounds: Rect {
+        var rect: Rect? = nil
+        var currentPoint: Point? = nil
+        var startPoint: Point? = nil
+        
+        for element in elements {
+            switch element {
+            case let .move(to: point):
+                startPoint = point
+                currentPoint = point
+            case let .line(to: point):
+                if let currentPoint {
+                    let bounds = Bezier.computeBoundingBoxForLine(start: currentPoint, end: point)
+                    rect = rect.union(bounds)
+                }
+                currentPoint = point
+            case let .curve(to: point, control1: control1, control2: control2):
+                if let currentPoint {
+                    let bounds = Bezier.computeBoundingBoxForCubicBezier([
+                        currentPoint, control1, control2, point
+                    ])
+                    rect = rect.union(bounds)
+                }
+                currentPoint = point
+
+            case .closeSubpath:
+                if let startPoint, let currentPoint, startPoint != currentPoint {
+                    // Draw a line between ending point and starting point
+                    let bounds = Bezier.computeBoundingBoxForLine(start: currentPoint, end: startPoint)
+                    rect = rect.union(bounds)
+                }
+                currentPoint = nil
+                startPoint = nil
+            }
+        }
+        
+        return rect ?? .zero
+    }
+    
     public func reversed() -> BezierPath {
         var subpaths = [[BezierPath.Element]]()
         var currentSubpath = [BezierPath.Element]()

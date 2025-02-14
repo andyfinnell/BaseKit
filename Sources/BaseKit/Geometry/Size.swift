@@ -16,4 +16,9 @@ public struct Size: Hashable, Codable, Sendable {
         let heightDelta = size.height - height
         return sqrt(widthDelta * widthDelta + heightDelta * heightDelta)
     }
+    
+    public func isClose(to other: Size, threshold: Real) -> Bool {
+        width.isClose(to: other.width, threshold: threshold)
+        && height.isClose(to: other.height, threshold: threshold)
+    }
 }

@@ -71,9 +71,91 @@ public enum Bezier {
             end,
         ]
     }
+    
+    public static func computeBoundingBoxForLine(start: Point, end: Point) -> Rect {
+        var topLeft = start
+        var bottomRight = topLeft
+        end.expandBounds(topLeft: &topLeft, bottomRight: &bottomRight)
+        return Rect(
+            x: topLeft.x,
+            y: topLeft.y,
+            width: bottomRight.x - topLeft.x,
+            height: bottomRight.y - topLeft.y
+        )
+    }
+    
+    public static func computeBoundingBoxForCubicBezier(_ bezierPoints: [Point]) -> Rect {        
+        // Start with the end points
+        var (topLeft, _, _) = splitBezier(bezierPoints, ofDegree: 3, at: 0)
+        var bottomRight = topLeft
+        let (lastPoint, _, _) = splitBezier(bezierPoints, ofDegree: 3, at: 1)
+        
+        lastPoint.expandBounds(topLeft: &topLeft, bottomRight: &bottomRight)
+        
+        // Find the roots, which should be the extremities
+        let xRoots = computeCubicFirstDerivativeRoots(
+            a: bezierPoints[0].x,
+            b: bezierPoints[1].x,
+            c: bezierPoints[2].x,
+            d: bezierPoints[3].x
+        )
+        
+        for t in xRoots {
+            if t < 0 || t > 1 {
+                continue
+            }
+            let (location, _, _) = splitBezier(bezierPoints, ofDegree: 3, at: t)
+            location.expandBounds(topLeft: &topLeft, bottomRight: &bottomRight)
+        }
+        
+        let yRoots = computeCubicFirstDerivativeRoots(
+            a: bezierPoints[0].y,
+            b: bezierPoints[1].y,
+            c: bezierPoints[2].y,
+            d: bezierPoints[3].y
+        )
+        for t in yRoots {
+            if t < 0 || t > 1 {
+                continue
+            }
+            let (location, _, _) = splitBezier(bezierPoints, ofDegree: 3, at: t)
+            location.expandBounds(topLeft: &topLeft, bottomRight: &bottomRight)
+        }
+        
+        return Rect(
+            x: topLeft.x,
+            y: topLeft.y,
+            width: bottomRight.x - topLeft.x,
+            height: bottomRight.y - topLeft.y
+        )
+    }
 }
 
 private extension Bezier {
+    static func computeCubicFirstDerivativeRoots(a: Real, b: Real, c: Real, d: Real) -> [Real] {
+        // See http://processingjs.nihongoresources.com/bezierinfo/#bounds for where the formulas come from
+        
+        let denominator = -a + 3.0 * b - 3.0 * c + d
+        
+        // If denominator == 0, fall back to
+        if denominator.isClose(to: 0.0, threshold: 1e-9) {
+            let t = (a - b) / (2.0 * (a - 2.0 * b + c))
+            return [t]
+        } else {
+            let numeratorLeft = -a + 2.0 * b - c
+            
+            let v1 = -a * (c - d)
+            let v2 = b * b
+            let v3 = b * (c + d)
+            let v4 = c * c
+            let numeratorRight = -1.0 * sqrt(v1 + v2 - v3 + v4)
+            
+            let t1 = (numeratorLeft + numeratorRight) / denominator
+            let t2 = (numeratorLeft - numeratorRight) / denominator
+            return [t1, t2]
+        }
+    }
+
     static func convertBezier(_ bezierPoints: [Point], relativeTo point: Point) -> [Point] {
         // c[i] in the paper
         let distanceFromPoint = [
