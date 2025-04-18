@@ -51,6 +51,36 @@ public struct Rect: Hashable, Codable, Sendable {
         origin.isClose(to: other.origin, threshold: threshold)
         && size.isClose(to: other.size, threshold: threshold)
     }
+    
+    public func insetBy(dx: Real, dy: Real) -> Rect {
+        Rect(
+            x: minX + dx,
+            y: minY + dy,
+            width: width - 2.0 * dx,
+            height: height - 2.0 * dy
+        )
+    }
+    
+    public func offsetBy(dx: Real, dy: Real) -> Rect {
+        Rect(
+            x: minX + dx,
+            y: minY + dy,
+            width: width,
+            height: height
+        )
+    }
+    
+    public func center(inside biggerRect: Rect) -> Rect {
+        let dx = (biggerRect.width - width) / 2.0
+        let dy = (biggerRect.height - height) / 2.0
+        return offsetBy(dx: dx, dy: dy)
+    }
+    
+    public func center(on insideRect: Rect) -> Rect {
+        let dx = (width - insideRect.width) / 2.0
+        let dy = (height - insideRect.height) / 2.0
+        return offsetBy(dx: -dx, dy: -dy)
+    }
 }
 
 public extension Optional where Wrapped == Rect {
