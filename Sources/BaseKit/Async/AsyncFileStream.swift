@@ -66,7 +66,8 @@ public struct AsyncFileStream<Mode>: ~Copyable, Sendable {
 public extension AsyncFileStream where Mode == ReadMode {
     /// Read the entire contents of the file in one go
     mutating func readToEnd() async throws -> Data {
-        try await readData(upToCount: .max)
+        let size = try file.size()
+        return try await readData(upToCount: Int(size))
     }
     
     mutating func readData(upToCount length: Int) async throws -> Data {

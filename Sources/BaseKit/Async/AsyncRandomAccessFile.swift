@@ -65,6 +65,15 @@ public struct AsyncRandomAccessFile: ~Copyable, Sendable {
 
     }
 
+    public func size() throws -> Int64 {
+        var stats = stat()
+        let error = fstat(fileDescriptor, &stats)
+        if error == -1 {
+            throw AsyncRandomAccessFileError.readError(errno)
+        }
+        return stats.st_size
+    }
+    
     deinit {
         // Ensure we've closed the file if we're going out of scope
         if !isClosed {

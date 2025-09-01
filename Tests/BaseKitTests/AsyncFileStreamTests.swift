@@ -24,6 +24,18 @@ final class AsyncFileStreamTests: XCTestCase {
         subject.close()
     }
 
+    func testReadToEndInitWhenFileExists() async throws {
+        let fileURL = try URL.temporaryFile()
+        let data = Data([0x01, 0x01, 0x01, 0x01])
+        try data.write(to: fileURL)
+        
+        var subject = try fileURL.openForReading()
+        let readData = try await subject.readToEnd()
+        XCTAssert(readData == data)
+        
+        subject.close()
+    }
+
     func testReadInitWhenFileDoesNotExists() async throws {
         let fileURL = try URL.temporaryFile()
         
