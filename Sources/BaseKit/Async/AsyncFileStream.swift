@@ -4,22 +4,14 @@ public extension Data {
     /// Asynchronously read from the contents of the fileURL. This method
     /// will throw an error if it's not a file URL.
     init(asyncContentsOf url: URL) async throws {
-        let stream = try url.openForReading()
-        var allData = Data()
-        let bytes = try await stream.readToEnd()
-        for await data in bytes {
-            allData.append(data)
-        }
-        self = allData
+        var stream = try url.openForReading()
+        self = try await stream.readToEnd()
     }
     
     /// Asynchronously write the contents of self into the fileURL.
     func asyncWrite(to url: URL) async throws {
-        // This line makes me sad because we're copying the data. I'm not
-        //  currently aware of a way to not copy these bytes.
-        let dispatchData = withUnsafeBytes { DispatchData(bytes: $0) }
-        let stream = try url.openForWriting()
-        try await stream.write(dispatchData)
+        var stream = try url.openForWriting()
+        try await stream.write(self)
     }
 }
 
@@ -54,113 +46,41 @@ public extension URL {
 }
 
 /// Allow async reading or writing to a file.
-public struct AsyncFileStream<Mode>: ~Copyable {
-    private let queue: DispatchQueue
-    private let fileDescriptor: Int32
-    private let io: DispatchIO
-    private var isClosed = false
-    
+public struct AsyncFileStream<Mode>: ~Copyable, Sendable {
+    private let file: AsyncRandomAccessFile
+    private var offset: off_t = 0
+        
     /// `url` has to be a file url, or this will throw
     /// `mode` is passed into the POSIX function `open()`
     fileprivate init(url: URL, mode: Int32) throws {
-        guard url.isFileURL else {
-            throw AsyncFileStreamError.notFileURL
-        }
-        // Since we're reading/writing as a stream, keep it a serial queue
-        let queue = DispatchQueue(label: "AsyncFileStream")
-        let fileDescriptor = open(url.absoluteURL.path, mode, 0o666)
-        // Once we start setting properties, we can't throw. So check to see if
-        //  we need to throw now, then set properties
-        if fileDescriptor == -1 {
-            throw AsyncFileStreamError.openError(errno)
-        }
-        self.queue = queue
-        self.fileDescriptor = fileDescriptor
-        io = DispatchIO(
-            type: .stream,
-            fileDescriptor: fileDescriptor,
-            queue: queue,
-            cleanupHandler: { [fileDescriptor] error in
-                // Unfortunately, we can't seem to do anything with `error`.
-                // There are no guarantees when this closure is invoked, so
-                //  the safe thing would be to save the error in an actor
-                //  that the AsyncFileStream holds. That would allow the caller
-                //  to check for it, or the read()/write() methods to check
-                //  for it as well. Howevever, having an actor as a property
-                //  on a non-copyable type appears to uncover a compiler bug.
-                
-                // Since we opened the file, we need to close it
-                Darwin.close(fileDescriptor)
-            }
-        )
+        file = try AsyncRandomAccessFile(url: url, mode: mode)
     }
-        
-    deinit {
-        // Ensure we've closed the file if we're going out of scope
-        if !isClosed {
-            io.close()
-        }
-    }
-     
+             
     /// Close the file. Consuming method
     public consuming func close() {
-        isClosed = true
-        io.close()
+        file.close()
     }
-
 }
 
 /// Methods available in read mode
 public extension AsyncFileStream where Mode == ReadMode {
     /// Read the entire contents of the file in one go
-    func readToEnd() async throws -> AsyncStream<Data> {
-        try await read(upToCount: .max)
+    mutating func readToEnd() async throws -> Data {
+        try await readData(upToCount: .max)
     }
     
-    func readData(upToCount length: Int) async throws -> Data {
-        let stream = try await read(upToCount: length)
-        var allData = Data()
-        for await data in stream {
-            allData.append(data)
-        }
-        return allData
-    }
-    
-    /// Read the next `length` bytes.
-    func read(upToCount length: Int) async throws -> AsyncStream<Data> {
-        let (stream, continuation) = AsyncStream.makeStream(of: Data.self)
-        io.read(offset: 0, length: length, queue: queue) { done, data, error in
-            if let data {
-                continuation.yield(Data(data))
-            }
-            guard done else {
-                return // not done yet
-            }
-            continuation.finish()
-        }
-        return stream
+    mutating func readData(upToCount length: Int) async throws -> Data {
+        let dataRead = try await file.read(length, at: offset)
+        offset += off_t(dataRead.count)
+        return dataRead
     }
 }
 
 /// Methods available in write mode
 public extension AsyncFileStream where Mode == WriteMode {
     /// Write the data out to file async
-    func write(_ data: DispatchData) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            io.write(
-                offset: 0,
-                data: data,
-                queue: queue
-            ) { done, _, error in
-                guard done else {
-                    return // not done yet
-                }
-                if error != 0 {
-                    continuation.resume(throwing: AsyncFileStreamError.writeError(error))
-                } else {
-                    continuation.resume(returning: ())
-                }
-            }
-        } as Void
+    mutating func write(_ data: Data) async throws {
+        let bytesWritten = try await file.write(data, at: offset)
+        offset += off_t(bytesWritten)        
     }
 }

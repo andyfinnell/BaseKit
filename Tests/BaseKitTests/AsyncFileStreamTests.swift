@@ -10,19 +10,6 @@ extension URL {
     }
 }
 
-extension DispatchData {
-    static func ==(lhs: DispatchData, rhs: Data) -> Bool {
-        guard lhs.count == rhs.count else {
-            return false
-        }
-        for i in 0..<lhs.count {
-            if lhs[i] != rhs[i] {
-                return false
-            }
-        }
-        return true
-    }
-}
 
 final class AsyncFileStreamTests: XCTestCase {
     func testReadInitWhenFileExists() async throws {
@@ -30,7 +17,7 @@ final class AsyncFileStreamTests: XCTestCase {
         let data = Data([0x01, 0x01, 0x01, 0x01])
         try data.write(to: fileURL)
         
-        let subject = try fileURL.openForReading()
+        var subject = try fileURL.openForReading()
         let readData = try await subject.readData(upToCount: 4)
         XCTAssert(readData == data)
         
@@ -41,8 +28,8 @@ final class AsyncFileStreamTests: XCTestCase {
         let fileURL = try URL.temporaryFile()
         
         do {
-            let subject = try fileURL.openForReading()
-            _ = try await subject.read(upToCount: 4)
+            var subject = try fileURL.openForReading()
+            _ = try await subject.readData(upToCount: 4)
             XCTFail("Should have thrown an error")
         } catch {
             // expected to throw
@@ -57,16 +44,13 @@ final class AsyncFileStreamTests: XCTestCase {
         try initialData.write(to: fileURL)
 
         // Write out
-        let writeStream = try fileURL.openForWriting()
+        var writeStream = try fileURL.openForWriting()
         let expectedData = Data([0x01, 0x02, 0x03, 0x04])
-        let writeData = expectedData.withUnsafeBytes { buffer in
-            DispatchData(bytes: buffer)
-        }
-        try await writeStream.write(writeData)
+        try await writeStream.write(expectedData)
         writeStream.close()
         
         // Read in
-        let readStream = try fileURL.openForReading()
+        var readStream = try fileURL.openForReading()
         let readData = try await readStream.readData(upToCount: 8)
         XCTAssert(readData == expectedData)
             
@@ -77,16 +61,13 @@ final class AsyncFileStreamTests: XCTestCase {
         let fileURL = try URL.temporaryFile()
         
         // Write out
-        let writeStream = try fileURL.openForWriting()
+        var writeStream = try fileURL.openForWriting()
         let bytes = Data([0x01, 0x02, 0x03, 0x04])
-        let writeData = bytes.withUnsafeBytes { buffer in
-            DispatchData(bytes: buffer)
-        }
-        try await writeStream.write(writeData)
+        try await writeStream.write(bytes)
         writeStream.close()
         
         // Read in
-        let readStream = try fileURL.openForReading()
+        var readStream = try fileURL.openForReading()
         let readData = try await readStream.readData(upToCount: 4)
         XCTAssert(readData == bytes)
             
@@ -98,7 +79,7 @@ final class AsyncFileStreamTests: XCTestCase {
         let data = Data([0x01, 0x01, 0x01, 0x01])
         try data.write(to: fileURL)
         
-        let subject = try fileURL.openForReading()
+        var subject = try fileURL.openForReading()
         let readData = try await subject.readData(upToCount: 4)
         XCTAssert(readData == data)
         
@@ -110,7 +91,7 @@ final class AsyncFileStreamTests: XCTestCase {
         let data = Data([0x01, 0x01, 0x01, 0x01])
         try data.write(to: fileURL)
         
-        let subject = try fileURL.openForReading()
+        var subject = try fileURL.openForReading()
         let readData = try await subject.readData(upToCount: 8)
         XCTAssert(readData == data)
         
@@ -122,8 +103,8 @@ final class AsyncFileStreamTests: XCTestCase {
         let data = Data([0x01, 0x01, 0x01, 0x01])
         try data.write(to: fileURL)
         
-        let subject = try fileURL.openForReading()
-        _ = try await subject.read(upToCount: 4) // read what's there
+        var subject = try fileURL.openForReading()
+        _ = try await subject.readData(upToCount: 4) // read what's there
         let readData = try await subject.readData(upToCount: 4)
         XCTAssert(readData.isEmpty)
         
@@ -135,13 +116,10 @@ final class AsyncFileStreamTests: XCTestCase {
         let data = Data([0x01, 0x01, 0x01, 0x01])
         try data.write(to: fileURL)
         
-        let subject = try fileURL.openForWriting()
+        var subject = try fileURL.openForWriting()
         
         let bytes = Data([0x02, 0x03, 0x04, 0x05])
-        let writeData = bytes.withUnsafeBytes { buffer in
-            DispatchData(bytes: buffer)
-        }
-        try await subject.write(writeData)
+        try await subject.write(bytes)
         subject.close()
 
         let readData = try Data(contentsOf: fileURL)
@@ -153,11 +131,11 @@ final class AsyncFileStreamTests: XCTestCase {
         let firstData = Data([0x01, 0x01, 0x01, 0x01])
         try firstData.write(to: fileURL)
         
-        let subject = try fileURL.openForWriting()
+        var subject = try fileURL.openForWriting()
         
         let secondData = Data([0x02, 0x03, 0x04, 0x05])
-        try await subject.write(firstData.withUnsafeBytes { DispatchData(bytes: $0) })
-        try await subject.write(secondData.withUnsafeBytes { DispatchData(bytes: $0) })
+        try await subject.write(firstData)
+        try await subject.write(secondData)
         subject.close()
 
         let readData = try Data(contentsOf: fileURL)
