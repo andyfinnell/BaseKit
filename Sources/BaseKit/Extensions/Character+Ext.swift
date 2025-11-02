@@ -1,6 +1,6 @@
 import Foundation
 
-extension Character: Codable {
+extension Character: @retroactive Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)

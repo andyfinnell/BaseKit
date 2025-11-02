@@ -1,4 +1,4 @@
-public struct UpsertXML<Content: XML, Changes: XMLUpdate>: XMLUpdate {
+public struct UpsertXML<Content: XML & SendableMetatype, Changes: XMLUpdate & SendableMetatype>: XMLUpdate {
     private let index: XMLIndex
     private let existingElement: XMLUpsertQuery
     private let content: @Sendable () -> Content

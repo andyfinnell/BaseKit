@@ -73,17 +73,17 @@ public struct AsyncRandomAccessFile: ~Copyable, Sendable {
         }
         return stats.st_size
     }
-    
+
     deinit {
         // Ensure we've closed the file if we're going out of scope
         if !isClosed {
-            unistd.close(fileDescriptor)
+            Darwin.close(fileDescriptor)
         }
     }
 
     public consuming func close() {
         isClosed = true
-        unistd.close(fileDescriptor)
+        Darwin.close(fileDescriptor)
     }
 }
 
@@ -213,7 +213,7 @@ private final class WriteOperation: AsyncIOOperation {
     private struct OperationResult {
         var dataToWrite: Data
         var controlBlockPointer: UnsafeMutablePointer<aiocb>?
-        var externalDataToWrite: UnsafeMutablePointer<CChar>?
+        var externalDataToWrite: UnsafeMutableRawBufferPointer?
     }
 
     private let fileDescriptor: Int32
@@ -243,21 +243,21 @@ private final class WriteOperation: AsyncIOOperation {
         let error = mutableBits.withLock { [fileDescriptor, offset] mutableBits in
             let byteCount = mutableBits.dataToWrite.count
             let controlBlockPointer = UnsafeMutablePointer<aiocb>.allocate(capacity: 1)
-            controlBlockPointer.pointee = mutableBits.dataToWrite.withUnsafeMutableBytes { rawPointer in
-                let unsafeMutablePointer: UnsafeMutablePointer<CChar>
+            controlBlockPointer.pointee = mutableBits.dataToWrite.withUnsafeMutableBytes { (rawBufferPointer: UnsafeMutableRawBufferPointer) in
+                let unsafeMutablePointer: UnsafeMutableRawBufferPointer
                 if byteCount > 16 {
                     // This is probably not inline data, so use it as is. YOLO
-                    unsafeMutablePointer = rawPointer
+                    unsafeMutablePointer = rawBufferPointer
                 } else {
                     // This is probably inline data, so make a copy
-                    unsafeMutablePointer = UnsafeMutablePointer<CChar>.allocate(capacity: byteCount)
-                    unsafeMutablePointer.initialize(from: rawPointer, count: byteCount)
+                    unsafeMutablePointer = UnsafeMutableRawBufferPointer.allocate(byteCount: byteCount, alignment: 16)
+                    unsafeMutablePointer.copyBytes(from: rawBufferPointer)
                     mutableBits.externalDataToWrite = unsafeMutablePointer
                 }
-                 return aiocb(
+                return aiocb(
                     aio_fildes: fileDescriptor,
                     aio_offset: offset,
-                    aio_buf: unsafeMutablePointer,
+                    aio_buf: unsafeMutablePointer.baseAddress,
                     aio_nbytes: byteCount,
                     aio_reqprio: 0,
                     aio_sigevent: sigevent(

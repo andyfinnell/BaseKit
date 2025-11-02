@@ -1,4 +1,4 @@
-public struct InsertXML<Content: XML>: XMLUpdate {
+public struct InsertXML<Content: XML & SendableMetatype>: XMLUpdate {
     private let index: XMLIndex
     private let content: @Sendable () -> Content
     private let overrideParent: Override<XMLID?>
