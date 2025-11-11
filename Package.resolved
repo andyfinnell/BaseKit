@@ -1,4 +1,5 @@
 {
+  "originHash" : "b6c8deb29e2b622382386ddddfb7be2b5ddb121c2e1615c9fcdda31a0e7b8ff7",
   "pins" : [
     {
       "identity" : "testkit",
@@ -6,9 +7,9 @@
       "location" : "https://github.com/andyfinnell/TestKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "f4eb41963fab711f2d5fae07c04ccdbc2c87189c"
+        "revision" : "6132ee7e302c362d9cda884c7c1fb1e84c0d12aa"
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

@@ -2,7 +2,7 @@ import Foundation
 import os
 
 public final class OSLogSink: LogSink {
-    private var logs = [LogTag: OSLog]()
+    private let memberData = OSAllocatedUnfairLock(uncheckedState: MemberData())
 
     public init() {}
     
@@ -13,14 +13,20 @@ public final class OSLogSink: LogSink {
 }
 
 private extension OSLogSink {
+    struct MemberData {
+        var logs = [LogTag: OSLog]()
+    }
+    
     func log(for tag: LogTag) -> OSLog {
-        guard let cachedLog = logs[tag] else {
-            let subsystem = Bundle.main.bundleIdentifier ?? "com.losingfight.basekit.default"
-            let log = OSLog(subsystem: subsystem, category: tag.rawValue)
-            logs[tag] = log
-            return log
+        memberData.withLock {
+            guard let cachedLog = $0.logs[tag] else {
+                let subsystem = Bundle.main.bundleIdentifier ?? "com.losingfight.basekit.default"
+                let log = OSLog(subsystem: subsystem, category: tag.rawValue)
+                $0.logs[tag] = log
+                return log
+            }
+            return cachedLog
         }
-        return cachedLog
     }
 }
 
