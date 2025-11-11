@@ -1,7 +1,7 @@
 import Foundation
 
 public enum ResourceVerb: Hashable, Sendable {
-    case index, show, create, update, delete
+    case index, show, create, update, delete, patch
 }
 
 public protocol ResourceRequest: Sendable {
@@ -108,6 +108,8 @@ public struct API: APIType {
             return .put
         case .show:
             return .get
+        case .patch:
+            return .patch
         }
     }
     
@@ -147,7 +149,7 @@ public struct API: APIType {
         case .index:
             body = .empty
             queryItems = try makeQueryItems(request)
-        case .update:
+        case .update, .patch:
             body = .json(request.parameters)
             queryItems = nil
         case .show:

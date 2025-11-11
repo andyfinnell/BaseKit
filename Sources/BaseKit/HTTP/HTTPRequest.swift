@@ -6,6 +6,7 @@ public struct HTTPRequest<T: Encodable & Equatable & Sendable>: Equatable, Senda
         case put = "PUT"
         case post = "POST"
         case delete = "DELETE"
+        case patch = "PATCH"
     }
     
     let method: Method
