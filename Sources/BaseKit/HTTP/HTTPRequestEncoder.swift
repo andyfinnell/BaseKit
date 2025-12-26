@@ -23,7 +23,12 @@ public struct HTTPRequestEncoder: HTTPRequestEncoderType {
         case .json(let value):
             urlRequest.httpBody = try JSONEncoder.standard.encode(value)
             urlRequest.setValue("application/json", forHTTPHeaderField: HTTPHeader.contentType.rawValue)
+        case .formData(let value):
+            let formData = try MultipartFormDataEncoder().encode(value)
+            urlRequest.httpBody = formData.bodyData
+            urlRequest.setValue(formData.contentType, forHTTPHeaderField: HTTPHeader.contentType.rawValue)
         }
         return urlRequest
     }
 }
+

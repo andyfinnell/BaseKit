@@ -13,11 +13,17 @@ public protocol ResourceRequest: Sendable {
     var parameters: ParameterType { get }
     var shouldRedactRequestBody: Bool { get }
     var shouldRedactResponseBody: Bool { get }
+    
+    func overrideBodyEncoding(_ parameters: ParameterType) -> HTTPRequestBody<ParameterType>?
 }
 
 public extension ResourceRequest {
     var shouldRedactRequestBody: Bool { return false }
     var shouldRedactResponseBody: Bool { return false }
+
+    func overrideBodyEncoding(_ parameters: ParameterType) -> HTTPRequestBody<ParameterType>? {
+        nil
+    }
 }
 
 enum APIError: Error {
@@ -141,7 +147,7 @@ public struct API: APIType {
         let queryItems: [URLQueryItem]?
         switch request.verb {
         case .create:
-            body = .json(request.parameters)
+            body = request.overrideBodyEncoding(request.parameters) ?? .json(request.parameters)
             queryItems = nil
         case .delete:
             body = .empty
@@ -150,7 +156,7 @@ public struct API: APIType {
             body = .empty
             queryItems = try makeQueryItems(request)
         case .update, .patch:
-            body = .json(request.parameters)
+            body = request.overrideBodyEncoding(request.parameters) ?? .json(request.parameters)
             queryItems = nil
         case .show:
             body = .empty
@@ -159,7 +165,6 @@ public struct API: APIType {
         return (body: body, queryItems: queryItems)
     }
 
-    
     private func makeQueryItems<T: ResourceRequest>(_ request: T) throws -> [URLQueryItem]? {
         let queryItems = try QueryItemEncoder().encode(request.parameters)
         if queryItems.isEmpty {
