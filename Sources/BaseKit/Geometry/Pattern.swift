@@ -1,26 +1,27 @@
-import Foundation
-
 public struct Pattern: Codable, Hashable, Sendable {
     public let name: String
-    public let imageData: Data // TODO: how to make this efficient in rendering? cache?
+    public let shapes: [DecoratedShape]
     public let tileWidth: Double
     public let tileHeight: Double
     public let patternTransform: Transform?
     public let boundingBox: Rect?
+    public let contentTransform: Transform?
 
     public init(
         name: String,
-        imageData: Data,
+        shapes: [DecoratedShape],
         tileWidth: Double = 0,
         tileHeight: Double = 0,
         patternTransform: Transform? = nil,
-        boundingBox: Rect? = nil
+        boundingBox: Rect? = nil,
+        contentTransform: Transform? = nil
     ) {
         self.name = name
-        self.imageData = imageData
+        self.shapes = shapes
         self.tileWidth = tileWidth
         self.tileHeight = tileHeight
         self.patternTransform = patternTransform
         self.boundingBox = boundingBox
+        self.contentTransform = contentTransform
     }
 }

@@ -1,4 +1,4 @@
-public struct LineDash: Hashable, Sendable {
+public struct LineDash: Hashable, Codable, Sendable {
     public let phase: Real
     public let lengths: [Real]
     
