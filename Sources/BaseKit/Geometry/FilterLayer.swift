@@ -57,7 +57,7 @@ public enum FilterEffect: Hashable, Sendable {
     case specularLighting(surfaceScale: Double, specularConstant: Double, specularExponent: Double, lightSource: LightSource)
 }
 
-public enum FilterBlendMode: String, Hashable, Sendable {
+public enum FilterBlendMode: String, Hashable, Sendable, CaseIterable {
     case normal
     case multiply
     case screen
@@ -65,7 +65,7 @@ public enum FilterBlendMode: String, Hashable, Sendable {
     case lighten
 }
 
-public enum FilterCompositeOperator: String, Hashable, Sendable {
+public enum FilterCompositeOperator: String, Hashable, Sendable, CaseIterable {
     case over
     case `in`
     case out
@@ -74,37 +74,37 @@ public enum FilterCompositeOperator: String, Hashable, Sendable {
     case arithmetic
 }
 
-public enum ColorMatrixType: String, Hashable, Sendable {
+public enum ColorMatrixType: String, Hashable, Sendable, CaseIterable {
     case matrix
     case saturate
     case hueRotate
     case luminanceToAlpha
 }
 
-public enum MorphologyOperator: String, Hashable, Sendable {
+public enum MorphologyOperator: String, Hashable, Sendable, CaseIterable {
     case erode
     case dilate
 }
 
-public enum ConvolveEdgeMode: String, Hashable, Sendable {
+public enum ConvolveEdgeMode: String, Hashable, Sendable, CaseIterable {
     case duplicate
     case wrap
     case none
 }
 
-public enum ChannelSelector: String, Hashable, Sendable {
+public enum ChannelSelector: String, Hashable, Sendable, CaseIterable {
     case r = "R"
     case g = "G"
     case b = "B"
     case a = "A"
 }
 
-public enum TurbulenceType: String, Hashable, Sendable {
+public enum TurbulenceType: String, Hashable, Sendable, CaseIterable {
     case turbulence
     case fractalNoise
 }
 
-public enum TransferFunctionType: String, Hashable, Sendable {
+public enum TransferFunctionType: String, Hashable, Sendable, CaseIterable {
     case identity
     case table
     case discrete
