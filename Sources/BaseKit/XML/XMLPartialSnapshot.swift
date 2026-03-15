@@ -11,11 +11,11 @@ public struct XMLReferenceIDFuture: Sendable, Hashable {
 }
 
 public struct XMLPartialSnapshot: Sendable {
-    let roots: [XMLID]
-    let values: [XMLID: XMLValue]
-    let referenceIDs: [XMLID: XMLReferenceIDFuture]
-    
-    init(
+    public let roots: [XMLID]
+    public let values: [XMLID: XMLValue]
+    public let referenceIDs: [XMLID: XMLReferenceIDFuture]
+
+    public init(
         roots: [XMLID],
         values: [XMLID: XMLValue],
         referenceIDs: [XMLID: XMLReferenceIDFuture] = [:]
@@ -78,5 +78,61 @@ public extension XMLPartialSnapshot {
         roots = allRootValues.map(\.id)
         values = storage
         referenceIDs = refIDs
+    }
+
+    /// Creates a deep copy of this snapshot with fresh XMLIDs.
+    /// Returns the remapped snapshot and the mapping from old IDs to new IDs.
+    func remappingIDs(newParentID: XMLID?) -> (snapshot: XMLPartialSnapshot, idMapping: [XMLID: XMLID]) {
+        var idMapping = [XMLID: XMLID]()
+        for id in values.keys {
+            idMapping[id] = XMLID()
+        }
+
+        var newValues = [XMLID: XMLValue]()
+        for (oldID, value) in values {
+            guard let newID = idMapping[oldID] else { continue }
+            let isRoot = roots.contains(oldID)
+            let resolvedParentID: XMLID? = isRoot ? newParentID : value.parentID.flatMap { idMapping[$0] }
+
+            switch value {
+            case let .element(element):
+                let newChildren = element.children.compactMap { idMapping[$0] }
+                let newElement = XMLElement(
+                    id: newID,
+                    parentID: resolvedParentID,
+                    name: element.name,
+                    namespaceURI: element.namespaceURI,
+                    qualifiedName: element.qualifiedName,
+                    attributes: element.attributes,
+                    children: newChildren
+                )
+                newValues[newID] = .element(newElement)
+            case let .text(text):
+                newValues[newID] = .text(XMLText(id: newID, parentID: resolvedParentID, characters: text.characters))
+            case let .cdata(cdata):
+                newValues[newID] = .cdata(XMLCData(id: newID, parentID: resolvedParentID, data: cdata.data))
+            case let .comment(comment):
+                newValues[newID] = .comment(XMLComment(id: newID, parentID: resolvedParentID, text: comment.text))
+            case let .ignorableWhitespace(ws):
+                newValues[newID] = .ignorableWhitespace(XMLIgnorableWhitespace(id: newID, parentID: resolvedParentID, text: ws.text))
+            }
+        }
+
+        let newRoots = roots.compactMap { idMapping[$0] }
+
+        // Elements with SVG id attributes need new unique reference IDs
+        var newReferenceIDs = [XMLID: XMLReferenceIDFuture]()
+        for (oldID, value) in values {
+            if case let .element(element) = value, let refID = element.attributes[.id] {
+                if let newID = idMapping[oldID] {
+                    newReferenceIDs[newID] = XMLReferenceIDFuture(name: "clone-\(refID)", template: refID)
+                }
+            }
+        }
+
+        return (
+            XMLPartialSnapshot(roots: newRoots, values: newValues, referenceIDs: newReferenceIDs),
+            idMapping
+        )
     }
 }

@@ -11,6 +11,13 @@ public struct XMLSnapshot: Sendable, Hashable {
 }
 
 public extension XMLSnapshot {
+    func subtreeSnapshot(from rootID: XMLID) -> XMLPartialSnapshot? {
+        guard values[rootID] != nil else { return nil }
+        var subtreeValues = [XMLID: XMLValue]()
+        collectSubtree(rootID, into: &subtreeValues)
+        return XMLPartialSnapshot(roots: [rootID], values: subtreeValues)
+    }
+
     init<Content: XML>(@XMLSnapshotBuilder builder: () -> Content) {
         let built = builder()
         var storage = [XMLID: XMLValue]()
@@ -37,5 +44,15 @@ public extension XMLSnapshot {
         
         roots = allRootValues.map(\.id)
         values = storage
+    }
+}
+
+private extension XMLSnapshot {
+    func collectSubtree(_ id: XMLID, into storage: inout [XMLID: XMLValue]) {
+        guard let value = values[id] else { return }
+        storage[id] = value
+        for childID in value.children {
+            collectSubtree(childID, into: &storage)
+        }
     }
 }

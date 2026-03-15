@@ -89,7 +89,7 @@ public struct XMLElement: Hashable, Identifiable, Sendable {
         attributes[name]
     }
     
-    func updateAttribute(_ value: String, for attributeName: XMLAttribute) -> XMLElement {
+    public func updateAttribute(_ value: String, for attributeName: XMLAttribute) -> XMLElement {
         var changedAttributes = attributes
         changedAttributes[attributeName] = value
         return XMLElement(
