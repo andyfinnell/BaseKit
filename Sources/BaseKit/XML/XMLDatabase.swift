@@ -469,12 +469,41 @@ private extension XMLDatabase {
             changedObjectIDs.insert(.updateRoot)
         }
         
-        // Create the undo record
+        // Compute the correct undo indices.
+        // The simple reversal (swap from/to) doesn't account for the
+        // index adjustment the reorder operation performs internally:
+        //   remove(at: from), then insert at (to >= from ? to-1 : to)
+        // So the element's final position differs from `to`. The undo
+        // must move from the actual final position back to the original.
+        let childCount: Int
+        if let parentID = change.parentID {
+            if case let .element(parentElement) = values[parentID] {
+                childCount = parentElement.children.count
+            } else {
+                childCount = 0
+            }
+        } else {
+            childCount = roots.count
+        }
+
+        let fromInt = change.fromIndex.resolved(in: childCount)
+        let toInt = change.toIndex.resolved(in: childCount)
+
+        let undoFromIndex: XMLIndex
+        let undoToIndex: XMLIndex
+        if toInt >= fromInt {
+            undoFromIndex = .at(toInt - 1)
+            undoToIndex = .at(fromInt)
+        } else {
+            undoFromIndex = .at(toInt)
+            undoToIndex = .at(fromInt + 1)
+        }
+
         let undoChange = XMLChange.reorder(
             XMLReorderChange(
                 parentID: change.parentID,
-                fromIndex: change.toIndex,
-                toIndex: change.fromIndex
+                fromIndex: undoFromIndex,
+                toIndex: undoToIndex
             )
         )
         return [undoChange]

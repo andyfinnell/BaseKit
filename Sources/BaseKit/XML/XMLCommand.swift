@@ -3,6 +3,13 @@ import Foundation
 public enum XMLIndex: Hashable, Sendable {
     case last
     case at(Int)
+
+    func resolved(in count: Int) -> Int {
+        switch self {
+        case let .at(i): i
+        case .last: count - 1
+        }
+    }
 }
 
 public struct XMLCreateContext: Sendable {
