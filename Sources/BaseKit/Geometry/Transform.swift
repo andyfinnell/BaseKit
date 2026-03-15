@@ -87,7 +87,7 @@ public extension Transform {
             b: -b / det,
             c: -c / det,
             d: a / det,
-            translateX: (-translateX * d - translateY * c) / det,
+            translateX: (-translateX * d + translateY * c) / det,
             translateY: (-translateY * a + translateX * b) / det
         )
     }

@@ -39,12 +39,41 @@ final class TransformTests: XCTestCase {
             .concatenating(Transform(rotate: .pi))
             .concatenating(Transform(scaleX: 2, y: 4))
         let backwards = forwards.inverted()
-                
+
         XCTAssertClose(
             backwards?.applying(
                 to: forwards.applying(to: Point(x: 10, y: 12))
             ),
             Point(x: 10, y: 12)
+        )
+    }
+
+    func testInvertWithRotation45() {
+        let forwards = Transform(translateX: 10, y: 20)
+            .concatenating(Transform(rotate: .pi / 4.0))
+        let backwards = forwards.inverted()
+
+        XCTAssertClose(
+            backwards?.applying(
+                to: forwards.applying(to: Point(x: 5, y: 8))
+            ),
+            Point(x: 5, y: 8)
+        )
+    }
+
+    func testInvertComplexTransform() {
+        let forwards = Transform(translateX: 10, y: 20)
+            .concatenating(Transform(rotate: .pi / 3.0))
+            .concatenating(Transform(scaleX: 1.5, y: 2.0))
+            .concatenating(Transform(translateX: -30, y: 15))
+            .concatenating(Transform(rotate: .pi / 6.0))
+        let backwards = forwards.inverted()
+
+        XCTAssertClose(
+            backwards?.applying(
+                to: forwards.applying(to: Point(x: 100, y: 200))
+            ),
+            Point(x: 100, y: 200)
         )
     }
 }
