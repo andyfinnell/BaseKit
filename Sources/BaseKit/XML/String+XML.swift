@@ -5,7 +5,6 @@ public extension String {
         "<": "&lt;",
         ">": "&gt;",
         "\"": "&quot;",
-        "'": "&apos;",
     ]
     
     func encodeXMLEntities() -> String {
