@@ -3,6 +3,8 @@ public struct TextRun: Hashable, Codable, Sendable {
         case fontName(String)
         case fontSize(Double)
         case textAlign(TextAlignment)
+        case letterSpacing(Double)
+        case wordSpacing(Double)
     }
 
     public let text: String
