@@ -45,47 +45,7 @@ public extension BezierPath {
     }
 }
 
-// MARK: - Subpath splitting
-
-private struct Subpath {
-    let elements: [BezierPath.Element]
-    let isClosed: Bool
-}
-
-private extension BezierPath {
-    func splitIntoSubpaths() -> [Subpath] {
-        var subpaths = [Subpath]()
-        var current = [Element]()
-        var isClosed = false
-
-        for element in elements {
-            switch element {
-            case .move:
-                if !current.isEmpty {
-                    subpaths.append(Subpath(elements: current, isClosed: isClosed))
-                    current = []
-                    isClosed = false
-                }
-                current.append(element)
-            case .line, .curve:
-                current.append(element)
-            case .closeSubpath:
-                isClosed = true
-                if !current.isEmpty {
-                    subpaths.append(Subpath(elements: current, isClosed: isClosed))
-                    current = []
-                    isClosed = false
-                }
-            }
-        }
-
-        if !current.isEmpty {
-            subpaths.append(Subpath(elements: current, isClosed: isClosed))
-        }
-
-        return subpaths
-    }
-}
+// MARK: - Subpath splitting (uses BezierPath.Subpath and splitIntoSubpaths() from BezierPath+Join.swift)
 
 // MARK: - Flattening
 

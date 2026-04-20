@@ -320,8 +320,8 @@ func convertQuadToCubic(from currentPoint: Point, controlPoint: Point, to endPoi
     return (controlPoint1: controlPoint1, controlPoint2: controlPoint2, endPoint: endPoint)
 }
 
-private extension BezierPath {
-    
+extension BezierPath {
+
     mutating func appendReverse(_ subpath: [BezierPath.Element]) {
         let isClosed = subpath.last == .closeSubpath
         
