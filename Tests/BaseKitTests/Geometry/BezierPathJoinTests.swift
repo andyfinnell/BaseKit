@@ -74,6 +74,73 @@ struct BezierPathJoinTests {
         #expect(subpaths[0].isClosed)
     }
 
+    // MARK: - opened()
+
+    @Test func openedOnAlreadyOpenPathReturnsSame() {
+        let path = BezierPath(elements: [
+            .move(to: Point(x: 0, y: 0)),
+            .line(to: Point(x: 10, y: 0)),
+            .line(to: Point(x: 10, y: 10)),
+        ])
+        let result = path.opened()
+        #expect(result.elements == path.elements)
+    }
+
+    @Test func openedOnClosedPathRemovesCloseSubpath() {
+        let path = BezierPath(elements: [
+            .move(to: Point(x: 0, y: 0)),
+            .line(to: Point(x: 10, y: 0)),
+            .line(to: Point(x: 10, y: 10)),
+            .closeSubpath,
+        ])
+        let result = path.opened()
+        let subpaths = result.splitIntoSubpaths()
+        #expect(subpaths.count == 1)
+        #expect(!subpaths[0].isClosed)
+        #expect(result.elements == [
+            .move(to: Point(x: 0, y: 0)),
+            .line(to: Point(x: 10, y: 0)),
+            .line(to: Point(x: 10, y: 10)),
+        ])
+    }
+
+    @Test func openedOnMultipleClosedSubpathsOpensAll() {
+        let path = BezierPath(elements: [
+            .move(to: Point(x: 0, y: 0)),
+            .line(to: Point(x: 10, y: 0)),
+            .closeSubpath,
+            .move(to: Point(x: 20, y: 0)),
+            .line(to: Point(x: 30, y: 0)),
+            .closeSubpath,
+        ])
+        let result = path.opened()
+        let subpaths = result.splitIntoSubpaths()
+        #expect(subpaths.count == 2)
+        #expect(!subpaths[0].isClosed)
+        #expect(!subpaths[1].isClosed)
+    }
+
+    @Test func openedOnMixedSubpathsOpensClosedOnes() {
+        let path = BezierPath(elements: [
+            .move(to: Point(x: 0, y: 0)),
+            .line(to: Point(x: 10, y: 0)),
+            .closeSubpath,
+            .move(to: Point(x: 20, y: 0)),
+            .line(to: Point(x: 30, y: 0)),
+        ])
+        let result = path.opened()
+        let subpaths = result.splitIntoSubpaths()
+        #expect(subpaths.count == 2)
+        #expect(!subpaths[0].isClosed)
+        #expect(!subpaths[1].isClosed)
+    }
+
+    @Test func openedOnEmptyPathReturnsEmpty() {
+        let path = BezierPath()
+        let result = path.opened()
+        #expect(result.elements.isEmpty)
+    }
+
     // MARK: - joined: two paths, end-to-start
 
     @Test func joinTwoPathsEndToStart() {
@@ -200,7 +267,7 @@ struct BezierPathJoinTests {
     // MARK: - joined: preserves closed subpaths
 
     @Test func joinPreservesClosedSubpaths() {
-        // Path A has a closed subpath, Path B is open
+        // Path A has a closed subpath, Path B and C are open
         let pathA = BezierPath(elements: [
             .move(to: Point(x: 0, y: 0)),
             .line(to: Point(x: 10, y: 0)),

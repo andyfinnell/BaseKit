@@ -59,6 +59,19 @@ public extension BezierPath {
         return result
     }
 
+    /// Returns an opened version of this path by removing `.closeSubpath`
+    /// from any closed subpaths.
+    func opened() -> BezierPath {
+        let subpaths = splitIntoSubpaths()
+        guard !subpaths.isEmpty else { return self }
+
+        var result = BezierPath()
+        for subpath in subpaths {
+            result.append(contentsOf: BezierPath(elements: subpath.elements))
+        }
+        return result
+    }
+
     /// Joins multiple open paths into a single continuous path by connecting
     /// their nearest endpoints. Closed subpaths are preserved unchanged.
     ///
