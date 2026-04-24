@@ -134,25 +134,35 @@ public enum Bezier {
 private extension Bezier {
     static func computeCubicFirstDerivativeRoots(a: Real, b: Real, c: Real, d: Real) -> [Real] {
         // See http://processingjs.nihongoresources.com/bezierinfo/#bounds for where the formulas come from
-        
+
         let denominator = -a + 3.0 * b - 3.0 * c + d
-        
-        // If denominator == 0, fall back to
+
+        // If the quadratic coefficient vanishes, solve the linear case
         if denominator.isClose(to: 0.0, threshold: 1e-9) {
-            let t = (a - b) / (2.0 * (a - 2.0 * b + c))
-            return [t]
+            let linearDenominator = 2.0 * (a - 2.0 * b + c)
+            guard !linearDenominator.isClose(to: 0.0, threshold: 1e-9) else {
+                return []
+            }
+            let t = (a - b) / linearDenominator
+            return [t].filter { $0.isFinite }
         } else {
             let numeratorLeft = -a + 2.0 * b - c
-            
+
             let v1 = -a * (c - d)
             let v2 = b * b
             let v3 = b * (c + d)
             let v4 = c * c
-            let numeratorRight = -1.0 * sqrt(v1 + v2 - v3 + v4)
-            
+            let discriminant = v1 + v2 - v3 + v4
+
+            guard discriminant >= 0 else {
+                return []
+            }
+
+            let numeratorRight = -1.0 * sqrt(discriminant)
+
             let t1 = (numeratorLeft + numeratorRight) / denominator
             let t2 = (numeratorLeft - numeratorRight) / denominator
-            return [t1, t2]
+            return [t1, t2].filter { $0.isFinite }
         }
     }
 

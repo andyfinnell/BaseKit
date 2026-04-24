@@ -46,6 +46,10 @@ public struct Rect: Hashable, Codable, Sendable {
     public func contains(_ point: Point) -> Bool {
         point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY
     }
+
+    public func intersects(_ other: Rect) -> Bool {
+        !(other.minX > maxX || other.maxX < minX || other.minY > maxY || other.maxY < minY)
+    }
     
     public func isClose(to other: Rect, threshold: Real) -> Bool {
         origin.isClose(to: other.origin, threshold: threshold)
