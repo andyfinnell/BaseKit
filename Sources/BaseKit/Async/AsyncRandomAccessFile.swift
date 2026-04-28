@@ -91,11 +91,31 @@ private protocol AsyncIOOperation: Sendable, AnyObject {
     func checkIfComplete() -> Bool
 }
 
+/// Outcome of an `aio_read`/`aio_write` submission attempt. EAGAIN at submission
+/// time means the kernel's AIO queue is full; we don't fail — we leave the
+/// operation enqueued in `AsyncIOQueue` so it'll be retried on the next tick.
+private enum AsyncIOSubmitOutcome: Sendable {
+    case submitted
+    case needsRetry
+    case failed(Int32)
+}
+
 private final class ReadOperation: AsyncIOOperation {
     private struct OperationResult {
         var rawPointer: UnsafeMutableRawPointer?
         var controlBlockPointer: UnsafeMutablePointer<aiocb>?
+        /// `true` once `aio_read` has accepted the request. Resets to `false` if
+        /// completion or submission later reports EAGAIN, so the polling loop will
+        /// retry.
+        var isSubmitted: Bool = false
     }
+
+    private enum TickOutcome: Sendable {
+        case keepWaiting
+        case terminalError(Int32)
+        case readSucceeded(Data)
+    }
+
     private let fileDescriptor: Int32
     private let byteCount: Int
     private let offset: off_t
@@ -121,7 +141,7 @@ private final class ReadOperation: AsyncIOOperation {
     }
     
     func read() throws {
-        let error = mutableBits.withLock { [fileDescriptor, offset, byteCount] mutableBits in
+        let outcome = mutableBits.withLock { [fileDescriptor, offset, byteCount] mutableBits -> AsyncIOSubmitOutcome in
             let rawPointer = UnsafeMutableRawPointer.allocate(byteCount: byteCount, alignment: 1)
             mutableBits.rawPointer = rawPointer
             let controlBlockPointer = UnsafeMutablePointer<aiocb>.allocate(capacity: 1)
@@ -141,71 +161,102 @@ private final class ReadOperation: AsyncIOOperation {
                 aio_lio_opcode: 0
             )
             mutableBits.controlBlockPointer = controlBlockPointer
-            
-            return aio_read(controlBlockPointer)
+            return Self.attemptSubmit(controlBlockPointer, mutableBits: &mutableBits)
         }
-        
-        if error == -1 {
-            throw AsyncRandomAccessFileError.readError(errno)
+
+        switch outcome {
+        case .submitted, .needsRetry:
+            AsyncIOQueue.shared.addOperation(self)
+        case .failed(let err):
+            throw AsyncRandomAccessFileError.readError(err)
         }
-        
-        AsyncIOQueue.shared.addOperation(self)
-    }
-    
-    func checkIfComplete() -> Bool {
-        guard isComplete() else {
-            return false
-        }
-        readCompleted()
-        return true
     }
 
-    private func isComplete() -> Bool {
-        mutableBits.withLock { mutableBits -> Bool in
+    func checkIfComplete() -> Bool {
+        let outcome = mutableBits.withLock { mutableBits -> TickOutcome in
             guard let controlBlockPointer = mutableBits.controlBlockPointer else {
-                return false
+                return .terminalError(0)
             }
-            
-            let err = aio_error(controlBlockPointer)
-            return err == 0
-        }
-    }
-    
-    private func readCompleted() {
-        let (error, data) = mutableBits.withLock { mutableBits -> (Int32, Data?) in
-            guard let controlBlockPointer = mutableBits.controlBlockPointer else {
-                return (0, nil)
+
+            // Pending submission (initial submit got EAGAIN, or completion saw
+            // EAGAIN and reset us): try `aio_read` again.
+            if !mutableBits.isSubmitted {
+                switch Self.attemptSubmit(controlBlockPointer, mutableBits: &mutableBits) {
+                case .submitted, .needsRetry:
+                    return .keepWaiting
+                case .failed(let err):
+                    return .terminalError(err)
+                }
             }
-                        
-            let err = aio_error(controlBlockPointer)
-            if err == -1 {
-                return (errno, nil)
-            } else if err != 0 {
-                return (err, nil)
+
+            // Submitted: check completion status.
+            let aioErr = aio_error(controlBlockPointer)
+            if aioErr == EINPROGRESS {
+                return .keepWaiting
             }
-            
+            if aioErr == EAGAIN {
+                mutableBits.isSubmitted = false
+                return .keepWaiting
+            }
+            if aioErr == -1 {
+                let err = errno
+                if err == EAGAIN {
+                    mutableBits.isSubmitted = false
+                    return .keepWaiting
+                }
+                return .terminalError(err)
+            }
+            if aioErr != 0 {
+                return .terminalError(aioErr)
+            }
+
+            // aio_error == 0: operation completed; pull the return value.
             let returnValue = aio_return(controlBlockPointer)
             if returnValue == -1 {
-                return (errno, nil)
+                let err = errno
+                if err == EAGAIN {
+                    mutableBits.isSubmitted = false
+                    return .keepWaiting
+                }
+                return .terminalError(err)
             }
-            let bytesRead = returnValue
-            
-            // At this point we want to transfer ownership of the data
+
             guard let rawPointer = mutableBits.rawPointer else {
-                return (0, nil)
+                return .terminalError(0)
             }
             mutableBits.rawPointer = nil
-            let readData = Data(bytesNoCopy: rawPointer, count: bytesRead, deallocator: .custom({ ptr, _ in
-                ptr.deallocate()
-            }))
-            return (0, readData)
+            let readData = Data(
+                bytesNoCopy: rawPointer, count: returnValue,
+                deallocator: .custom({ ptr, _ in ptr.deallocate() }))
+            return .readSucceeded(readData)
         }
-        
-        if let data {
+
+        switch outcome {
+        case .keepWaiting:
+            return false
+        case .terminalError(let err):
+            completion(.failure(AsyncRandomAccessFileError.readError(err)))
+            return true
+        case .readSucceeded(let data):
             completion(.success(data))
-        } else {
-            completion(.failure(AsyncRandomAccessFileError.readError(error)))
+            return true
         }
+    }
+
+    private static func attemptSubmit(
+        _ controlBlockPointer: UnsafeMutablePointer<aiocb>,
+        mutableBits: inout OperationResult
+    ) -> AsyncIOSubmitOutcome {
+        let result = aio_read(controlBlockPointer)
+        if result == 0 {
+            mutableBits.isSubmitted = true
+            return .submitted
+        }
+        let err = errno
+        if err == EAGAIN {
+            return .needsRetry
+        }
+        return .failed(err)
     }
 }
 
@@ -214,6 +265,14 @@ private final class WriteOperation: AsyncIOOperation {
         var dataToWrite: Data
         var controlBlockPointer: UnsafeMutablePointer<aiocb>?
         var externalDataToWrite: UnsafeMutableRawBufferPointer?
+        /// `true` once `aio_write` has accepted the request. See `ReadOperation`.
+        var isSubmitted: Bool = false
+    }
+
+    private enum TickOutcome: Sendable {
+        case keepWaiting
+        case terminalError(Int32)
+        case writeSucceeded(byteCount: Int)
     }
 
     private let fileDescriptor: Int32
@@ -240,7 +299,7 @@ private final class WriteOperation: AsyncIOOperation {
     }
 
     func write() throws {
-        let error = mutableBits.withLock { [fileDescriptor, offset] mutableBits in
+        let outcome = mutableBits.withLock { [fileDescriptor, offset] mutableBits -> AsyncIOSubmitOutcome in
             let byteCount = mutableBits.dataToWrite.count
             let controlBlockPointer = UnsafeMutablePointer<aiocb>.allocate(capacity: 1)
             controlBlockPointer.pointee = mutableBits.dataToWrite.withUnsafeMutableBytes { (rawBufferPointer: UnsafeMutableRawBufferPointer) in
@@ -271,61 +330,90 @@ private final class WriteOperation: AsyncIOOperation {
                 )
             }
             mutableBits.controlBlockPointer = controlBlockPointer
-            return aio_write(controlBlockPointer)
+            return Self.attemptSubmit(controlBlockPointer, mutableBits: &mutableBits)
         }
-        
-        if error == -1 {
-            throw AsyncRandomAccessFileError.writeError(errno)
+
+        switch outcome {
+        case .submitted, .needsRetry:
+            AsyncIOQueue.shared.addOperation(self)
+        case .failed(let err):
+            throw AsyncRandomAccessFileError.writeError(err)
         }
-        
-        AsyncIOQueue.shared.addOperation(self)
-    }
-    
-    func checkIfComplete() -> Bool {
-        guard isComplete() else {
-            return false
-        }
-        writeCompleted()
-        return true
     }
 
-    private func isComplete() -> Bool {
-        mutableBits.withLock { mutableBits -> Bool in
+    func checkIfComplete() -> Bool {
+        let outcome = mutableBits.withLock { mutableBits -> TickOutcome in
             guard let controlBlockPointer = mutableBits.controlBlockPointer else {
-                return false
+                return .terminalError(0)
             }
-            
-            let err = aio_error(controlBlockPointer)
-            return err == 0
-        }
-    }
-    
-    private func writeCompleted() {
-        let (error, bytesWritten) = mutableBits.withLock { mutableBits -> (Int32, Int) in
-            guard let controlBlockPointer = mutableBits.controlBlockPointer else {
-                return (0, 0)
+
+            if !mutableBits.isSubmitted {
+                switch Self.attemptSubmit(controlBlockPointer, mutableBits: &mutableBits) {
+                case .submitted, .needsRetry:
+                    return .keepWaiting
+                case .failed(let err):
+                    return .terminalError(err)
+                }
             }
-                        
-            let err = aio_error(controlBlockPointer)
-            if err == -1 {
-                return (errno, 0)
-            } else if err != 0 {
-                return (err, 0)
+
+            let aioErr = aio_error(controlBlockPointer)
+            if aioErr == EINPROGRESS {
+                return .keepWaiting
             }
-            
+            if aioErr == EAGAIN {
+                mutableBits.isSubmitted = false
+                return .keepWaiting
+            }
+            if aioErr == -1 {
+                let err = errno
+                if err == EAGAIN {
+                    mutableBits.isSubmitted = false
+                    return .keepWaiting
+                }
+                return .terminalError(err)
+            }
+            if aioErr != 0 {
+                return .terminalError(aioErr)
+            }
+
             let returnValue = aio_return(controlBlockPointer)
             if returnValue == -1 {
-                return (errno, 0)
+                let err = errno
+                if err == EAGAIN {
+                    mutableBits.isSubmitted = false
+                    return .keepWaiting
+                }
+                return .terminalError(err)
             }
-            let bytesWritten = returnValue
-            return (0, bytesWritten)
+            return .writeSucceeded(byteCount: returnValue)
         }
-        
-        if error == 0 {
+
+        switch outcome {
+        case .keepWaiting:
+            return false
+        case .terminalError(let err):
+            completion(.failure(AsyncRandomAccessFileError.writeError(err)))
+            return true
+        case .writeSucceeded(let bytesWritten):
             completion(.success(bytesWritten))
-        } else {
-            completion(.failure(AsyncRandomAccessFileError.readError(error)))
+            return true
         }
+    }
+
+    private static func attemptSubmit(
+        _ controlBlockPointer: UnsafeMutablePointer<aiocb>,
+        mutableBits: inout OperationResult
+    ) -> AsyncIOSubmitOutcome {
+        let result = aio_write(controlBlockPointer)
+        if result == 0 {
+            mutableBits.isSubmitted = true
+            return .submitted
+        }
+        let err = errno
+        if err == EAGAIN {
+            return .needsRetry
+        }
+        return .failed(err)
     }
 }
 
