@@ -33,10 +33,16 @@ public final actor JSONStorage<Value: Codable & Sendable>: CodableStorage {
 
     public func makeStream() async -> AsyncStream<Value> {
         let (stream, continuation) = AsyncStream<Value>.makeStream()
-        registerListener(continuation)
+        // Resolve the initial value BEFORE registering the listener so we
+        // never observe the order `[stored, initialLoad]` in the stream
+        // buffer. If `store()` runs during the disk-read suspension, its
+        // value is captured in the cache and returned by `load()` here.
+        // Sync calls below (yield + registerListener) run without further
+        // suspension on the actor, so no new `store()` can interleave.
         if let initialValue = await load() {
             continuation.yield(initialValue)
         }
+        registerListener(continuation)
         return stream
     }
 
