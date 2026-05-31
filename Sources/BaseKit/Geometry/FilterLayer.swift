@@ -36,6 +36,10 @@ public enum FilterInput: Hashable, Sendable {
     case sourceGraphic
     case sourceAlpha
     case named(String)
+    /// SVG semantics: when `in` is omitted on a non-first primitive, the
+    /// primitive reads the previous primitive's result rather than
+    /// SourceGraphic. The LayoutEngine emits this case for that situation.
+    case previousResult
 }
 
 public enum FilterEffect: Hashable, Sendable {
