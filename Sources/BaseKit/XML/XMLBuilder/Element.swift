@@ -27,37 +27,24 @@ public struct Element<Content: XML>: XML {
             storingInto: &storage,
             registeringReferenceInto: &references
         )
-        var allChildValues = [XMLValue]()
-        var isIndented = false
-        for (i, childValue) in childValues.enumerated() {
-            switch childValue {
-            case .cdata, .element, .comment:
-                // These should go on a line on their own
-                let isLast = i == (childValues.count - 1)
-                
-                if !isIndented {
-                    let prefixText = XMLText(id: XMLID(), parentID: id, characters: "\n\(childContext.indentString)")
-                    storage[prefixText.id] = .text(prefixText)
-                    allChildValues.append(.text(prefixText))
-                }
-                
-                allChildValues.append(childValue)
-                
-                let postfixString: String
-                if isLast {
-                    postfixString = "\n\(context.indentString)"
-                } else {
-                    postfixString = "\n\(childContext.indentString)"
-                }
-                let postfixText = XMLText(id: XMLID(), parentID: id, characters: postfixString)
-                storage[postfixText.id] = .text(postfixText)
-                allChildValues.append(.text(postfixText))
-                isIndented = true
 
-            case .text, .ignorableWhitespace:
-                allChildValues.append(childValue)
-                isIndented = false
-            }
+        // Mixed-content elements (those with author-supplied Text siblings)
+        // must preserve their character data exactly — inserting pretty-print
+        // whitespace between siblings would corrupt SVG 1.1 §10.15 xml:space
+        // normalization and similar character-data-sensitive parsers. Use the
+        // children as authored.
+        let hasAuthoredText = childValues.contains { value in
+            if case .text = value { return true }
+            return false
+        }
+        let allChildValues: [XMLValue]
+        if hasAuthoredText {
+            allChildValues = childValues
+        } else {
+            allChildValues = indented(
+                childValues, in: id,
+                childContext: childContext, context: context,
+                storage: &storage)
         }
         
         let element = XMLElement(
@@ -74,4 +61,48 @@ public struct Element<Content: XML>: XML {
     }
     
     public var body: Never { fatalError() }
+}
+
+private extension Element {
+    func indented(
+        _ childValues: [XMLValue],
+        in id: XMLID,
+        childContext: XMLBuilderContext,
+        context: XMLBuilderContext,
+        storage: inout [XMLID: XMLValue]
+    ) -> [XMLValue] {
+        var allChildValues = [XMLValue]()
+        var isIndented = false
+        for (i, childValue) in childValues.enumerated() {
+            switch childValue {
+            case .cdata, .element, .comment:
+                // These should go on a line on their own
+                let isLast = i == (childValues.count - 1)
+
+                if !isIndented {
+                    let prefixText = XMLText(id: XMLID(), parentID: id, characters: "\n\(childContext.indentString)")
+                    storage[prefixText.id] = .text(prefixText)
+                    allChildValues.append(.text(prefixText))
+                }
+
+                allChildValues.append(childValue)
+
+                let postfixString: String
+                if isLast {
+                    postfixString = "\n\(context.indentString)"
+                } else {
+                    postfixString = "\n\(childContext.indentString)"
+                }
+                let postfixText = XMLText(id: XMLID(), parentID: id, characters: postfixString)
+                storage[postfixText.id] = .text(postfixText)
+                allChildValues.append(.text(postfixText))
+                isIndented = true
+
+            case .text, .ignorableWhitespace:
+                allChildValues.append(childValue)
+                isIndented = false
+            }
+        }
+        return allChildValues
+    }
 }
