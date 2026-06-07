@@ -1,7 +1,18 @@
 public struct TextRun: Hashable, Codable, Sendable {
     public enum Attribute: Hashable, Codable, Sendable {
+        /// A pre-resolved font face by PostScript name. Used by callers
+        /// that bypass the full font-matching pipeline (HUD overlays,
+        /// editor round-trips). Paired with `.fontSize`.
         case fontName(String)
+        /// Point size paired with `.fontName`. Ignored when the run
+        /// carries a `.fontRequest`.
         case fontSize(Double)
+        /// A font face described by family + traits + size. The renderer
+        /// is responsible for resolving this to a platform font. SVG
+        /// layout emits this; carries enough state to handle font
+        /// fallback, stretch, variant, and `font-size-adjust` without
+        /// the producer touching CoreText.
+        case fontRequest(FontRequest)
         case textAlign(TextAlignment)
         case letterSpacing(Double)
         case wordSpacing(Double)
