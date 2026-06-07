@@ -24,6 +24,12 @@ public struct TextRun: Hashable, Codable, Sendable {
     public let textDecorationLines: TextDecorationLine?
     public let dx: Double
     public let dy: Double
+    /// Per-run baseline shift in user units, SVG-y-down (positive =
+    /// visually down). Distinct from `dy`: this offset is applied only
+    /// to this run's glyphs and does NOT advance the current text
+    /// position for subsequent runs. Carries the resolved sum of SVG's
+    /// `baseline-shift` and `alignment-baseline` per spec §10.9.2.
+    public let baselineShift: Double
 
     public init(
         text: String,
@@ -31,7 +37,8 @@ public struct TextRun: Hashable, Codable, Sendable {
         decorations: [Decoration]? = nil,
         textDecorationLines: TextDecorationLine? = nil,
         dx: Double = 0,
-        dy: Double = 0
+        dy: Double = 0,
+        baselineShift: Double = 0
     ) {
         self.text = text
         self.attributes = attributes
@@ -39,11 +46,13 @@ public struct TextRun: Hashable, Codable, Sendable {
         self.textDecorationLines = textDecorationLines
         self.dx = dx
         self.dy = dy
+        self.baselineShift = baselineShift
     }
 }
 
 extension TextRun {
     public var needsPerRunRendering: Bool {
         decorations != nil || textDecorationLines != nil || dx != 0 || dy != 0
+            || baselineShift != 0
     }
 }
