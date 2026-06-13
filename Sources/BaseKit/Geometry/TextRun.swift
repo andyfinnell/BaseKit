@@ -30,6 +30,25 @@ public struct TextRun: Hashable, Codable, Sendable {
     /// position for subsequent runs. Carries the resolved sum of SVG's
     /// `baseline-shift` and `alignment-baseline` per spec §10.9.2.
     public let baselineShift: Double
+    /// Absolute per-glyph positions in the TextLayer's local user
+    /// space (SVG-y-down, same convention as `dy` and
+    /// `TextLayer.position`). Indexed by glyph in the run's CTRun
+    /// iteration order. When set, callers MUST disable ligatures upstream
+    /// so glyph-index aligns 1:1 with character-index within the run —
+    /// per SVG 1.1 §10.5, explicit per-character positioning breaks
+    /// ligatures.
+    ///
+    /// Outer nil = no per-glyph data on this run (fast framesetter
+    /// path applies). Inner nil at index `i` = that glyph uses its
+    /// natural CT advance instead of an explicit position. When any
+    /// run in a TextLayer sets this (or `perGlyphRotations`), the
+    /// entire layer renders via the per-glyph composition path.
+    public let perGlyphOffsets: [Point?]?
+    /// Per-glyph rotations in radians, SVG sense (positive = clockwise
+    /// visually, matching SVG `rotate=`). Rotation is around the
+    /// glyph's own origin (baseline-left). Indexing and nil semantics
+    /// mirror `perGlyphOffsets`.
+    public let perGlyphRotations: [Double?]?
 
     public init(
         text: String,
@@ -38,7 +57,9 @@ public struct TextRun: Hashable, Codable, Sendable {
         textDecorationLines: TextDecorationLine? = nil,
         dx: Double = 0,
         dy: Double = 0,
-        baselineShift: Double = 0
+        baselineShift: Double = 0,
+        perGlyphOffsets: [Point?]? = nil,
+        perGlyphRotations: [Double?]? = nil
     ) {
         self.text = text
         self.attributes = attributes
@@ -47,6 +68,8 @@ public struct TextRun: Hashable, Codable, Sendable {
         self.dx = dx
         self.dy = dy
         self.baselineShift = baselineShift
+        self.perGlyphOffsets = perGlyphOffsets
+        self.perGlyphRotations = perGlyphRotations
     }
 }
 
@@ -54,5 +77,13 @@ extension TextRun {
     public var needsPerRunRendering: Bool {
         decorations != nil || textDecorationLines != nil || dx != 0 || dy != 0
             || baselineShift != 0
+    }
+
+    /// True when this run carries explicit per-glyph position or
+    /// rotation data. Any such run forces the entire TextLayer onto
+    /// the per-glyph composition path (mixing with the framesetter's
+    /// natural layout in one layer is not supported).
+    public var needsPerGlyphRendering: Bool {
+        perGlyphOffsets != nil || perGlyphRotations != nil
     }
 }
